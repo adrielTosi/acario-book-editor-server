@@ -4,13 +4,13 @@ Backend code for Book Editor made for personal use.
 
 ## Stack
 
-- Apollo Server
+- [Apollo Server](https://www.apollographql.com/docs/apollo-server/)
 
-- Prisma
+- [Prisma](https://www.prisma.io/)
 
-- TypegraphQL
+- [TypegraphQL](https://typegraphql.com/)
 
-- Typescript
+- [Typescript](https://www.typescriptlang.org/)
 
 ## Freelance portfolio
 
