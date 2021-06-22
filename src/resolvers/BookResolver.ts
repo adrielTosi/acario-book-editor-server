@@ -9,7 +9,9 @@ import {
   Mutation,
   Query,
   Resolver,
+  UseMiddleware,
 } from "type-graphql";
+import { isLogged } from "../middleware/isLogged";
 
 @InputType()
 export class InputNewBook {
@@ -22,18 +24,16 @@ export class InputNewBook {
 
 @Resolver((_of) => Book)
 export class BookResolver {
+  // TODO: CREATE `UPDATE` MUTATION
   /**
    * @CREATE_BOOK
    */
   @Mutation(() => Book)
+  @UseMiddleware(isLogged)
   async createBook(
     @Arg("bookData") data: InputNewBook,
     @Ctx() ctx: Context
   ): Promise<Book> {
-    if (!ctx.req.session.userId) {
-      throw new AuthenticationError("Please login to create a Book.");
-    }
-
     const user = await ctx.prisma.user.findUnique({
       where: { id: ctx.req.session.userId },
     });
@@ -64,14 +64,32 @@ export class BookResolver {
   }
 
   /**
+   * @GET_BOOK
+   */
+  @Query(() => Book)
+  @UseMiddleware(isLogged)
+  async getBook(
+    @Arg("bookId") bookId: string,
+    @Ctx() ctx: Context
+  ): Promise<Book> {
+    const book = await ctx.prisma.book.findUnique({
+      where: { id: bookId },
+      include: { chapters: true },
+    });
+
+    if (!book) {
+      throw new UserInputError("Book doesn't exist.");
+    }
+
+    return book;
+  }
+
+  /**
    * @GET_BOOKS
    */
   @Query(() => [Book])
+  @UseMiddleware(isLogged)
   async getBooks(@Ctx() ctx: Context): Promise<Book[]> {
-    if (!ctx.req.session.userId) {
-      throw new AuthenticationError("Please login to create a Book.");
-    }
-
     const books = await ctx.prisma.book.findMany({
       where: { authorId: ctx.req.session.userId },
       include: { chapters: true },
@@ -82,5 +100,29 @@ export class BookResolver {
     }
 
     return books;
+  }
+
+  /**
+   * @DELETE_BOOK
+   */
+  @Mutation(() => Boolean)
+  @UseMiddleware(isLogged)
+  async deleteBook(
+    @Arg("bookId") id: string,
+    @Ctx() ctx: Context
+  ): Promise<Boolean> {
+    const book = await ctx.prisma.book.findUnique({ where: { id } });
+
+    if (!book) {
+      throw new UserInputError("No book found.");
+    }
+
+    if (book.authorId !== ctx.req.session.userId) {
+      throw new AuthenticationError("Book is not yours.");
+    }
+
+    await ctx.prisma.chapter.deleteMany({ where: { bookId: id } });
+    await ctx.prisma.book.delete({ where: { id } });
+    return true;
   }
 }
