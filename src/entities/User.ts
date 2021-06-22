@@ -6,8 +6,15 @@ export class User {
   id: string;
 
   @Field()
+  name: string;
+
+  @Field()
   email: string;
 
   @Field()
-  name: string;
+  password: string;
+
+  // -------
+  @Field(() => String)
+  createdAt: Date;
 }

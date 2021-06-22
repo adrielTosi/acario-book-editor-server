@@ -15,9 +15,11 @@ import { Context } from "./types";
 
 declare module "express-session" {
   interface Session {
-    userId: number;
+    userId: string;
   }
 }
+
+const prisma = new PrismaClient();
 
 const main = async () => {
   dotenv.config();
@@ -26,8 +28,6 @@ const main = async () => {
 
   const RedisStore = redisStore(session);
   const redis = new Redis();
-
-  const prisma = new PrismaClient();
 
   app.use(
     session({
@@ -66,4 +66,8 @@ const main = async () => {
   });
 };
 
-main().catch((err) => console.error(err));
+main()
+  .catch((err) => console.error(err))
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
