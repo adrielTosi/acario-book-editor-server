@@ -10,8 +10,10 @@ import redisStore from "connect-redis";
 import cors from "cors";
 import dotenv from "dotenv";
 import { buildSchema } from "type-graphql";
-import { UserResolver } from "./resolvers/UserResolver";
 import { Context } from "./types";
+
+import { UserResolver } from "./resolvers/UserResolver";
+import { BookResolver } from "./resolvers/BookResolver";
 
 declare module "express-session" {
   interface Session {
@@ -49,7 +51,7 @@ const main = async () => {
 
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
-      resolvers: [UserResolver],
+      resolvers: [UserResolver, BookResolver],
       validate: false,
     }),
     context: ({ req, res }): Context => ({ req, res, redis, prisma }),
