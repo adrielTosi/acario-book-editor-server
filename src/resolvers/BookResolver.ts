@@ -74,7 +74,7 @@ export class BookResolver {
   ): Promise<Book> {
     const book = await ctx.prisma.book.findUnique({
       where: { id: bookId },
-      include: { chapters: true },
+      include: { chapters: true, author: true },
     });
 
     if (!book) {

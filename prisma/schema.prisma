@@ -28,6 +28,7 @@ model Book {
   title       String
   chapters    Chapter[]
   createdAt   DateTime  @default(now())
+  // updatedAt
 }
 
 model Chapter {
@@ -39,4 +40,6 @@ model Chapter {
   author    User     @relation(fields: [authorId], references: [id])
   authorId  String
   createdAt DateTime @default(now())
+  // chapterNumber: position of chapter
+  // updatedAt
 }
