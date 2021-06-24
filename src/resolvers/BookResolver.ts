@@ -57,6 +57,7 @@ export class BookResolver {
       },
       include: {
         chapters: true,
+        notes: true,
       },
     });
 
@@ -72,13 +73,28 @@ export class BookResolver {
     @Arg("bookId") bookId: string,
     @Ctx() ctx: Context
   ): Promise<Book> {
+    const author = await ctx.prisma.user.findUnique({
+      where: { id: ctx.req.session.userId },
+    });
+
+    if (!author) {
+      throw new AuthenticationError("Invalid user.");
+    }
+
     const book = await ctx.prisma.book.findUnique({
       where: { id: bookId },
-      include: { chapters: true, author: true },
+      include: {
+        chapters: { include: { notes: true } },
+        author: true,
+        notes: true,
+      },
     });
 
     if (!book) {
       throw new UserInputError("Book doesn't exist.");
+    }
+    if (book.authorId !== author.id) {
+      throw new AuthenticationError("Book is not yours.");
     }
 
     return book;
@@ -90,9 +106,17 @@ export class BookResolver {
   @Query(() => [Book])
   @UseMiddleware(isLogged)
   async getBooks(@Ctx() ctx: Context): Promise<Book[]> {
+    const author = await ctx.prisma.user.findUnique({
+      where: { id: ctx.req.session.userId },
+    });
+
+    if (!author) {
+      throw new AuthenticationError("Invalid user.");
+    }
+
     const books = await ctx.prisma.book.findMany({
-      where: { authorId: ctx.req.session.userId },
-      include: { chapters: true },
+      where: { authorId: author.id },
+      include: { chapters: { include: { notes: true } }, notes: true },
     });
 
     if (!books) {
@@ -121,6 +145,7 @@ export class BookResolver {
       throw new AuthenticationError("Book is not yours.");
     }
 
+    await ctx.prisma.note.deleteMany({ where: { bookId: id } });
     await ctx.prisma.chapter.deleteMany({ where: { bookId: id } });
     await ctx.prisma.book.delete({ where: { id } });
     return true;

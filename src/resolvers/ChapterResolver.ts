@@ -39,19 +39,19 @@ export class ChapterResolver {
     @Arg("chapterData") data: InputCreateChapter,
     @Ctx() ctx: Context
   ): Promise<Chapter> {
-    const book = await ctx.prisma.book.findUnique({
-      where: { id: data.bookId },
-    });
-    if (!book) {
-      throw new UserInputError("Book doesn't exist or has been deleted.");
-    }
-
     const author = await ctx.prisma.user.findUnique({
       where: { id: ctx.req.session.userId },
     });
 
     if (!author) {
       throw new AuthenticationError("Invalid user.");
+    }
+
+    const book = await ctx.prisma.book.findUnique({
+      where: { id: data.bookId },
+    });
+    if (!book) {
+      throw new UserInputError("Book doesn't exist or has been deleted.");
     }
 
     if (book.authorId !== author.id) {
@@ -78,9 +78,19 @@ export class ChapterResolver {
     @Arg("bookId") bookId: string,
     @Ctx() ctx: Context
   ): Promise<Chapter[]> {
+    const author = await ctx.prisma.user.findUnique({
+      where: { id: ctx.req.session.userId },
+    });
+
+    if (!author) {
+      throw new AuthenticationError("Invalid user.");
+    }
     const book = await ctx.prisma.book.findUnique({ where: { id: bookId } });
     if (!book) {
       throw new UserInputError("Book doesn't exist or has been deleted.");
+    }
+    if (book.authorId !== author.id) {
+      throw new AuthenticationError("Book is not yours.");
     }
 
     const chapters = await ctx.prisma.chapter.findMany({ where: { bookId } });
@@ -97,9 +107,19 @@ export class ChapterResolver {
     @Arg("chapterId") chapterId: string,
     @Ctx() ctx: Context
   ): Promise<Chapter> {
+    const author = await ctx.prisma.user.findUnique({
+      where: { id: ctx.req.session.userId },
+    });
+
+    if (!author) {
+      throw new AuthenticationError("Invalid user.");
+    }
     const book = await ctx.prisma.book.findUnique({ where: { id: bookId } });
     if (!book) {
       throw new UserInputError("Book doesn't exist or has been deleted.");
+    }
+    if (book.authorId !== author.id) {
+      throw new AuthenticationError("Book is not yours.");
     }
 
     const chapter = await ctx.prisma.chapter.findUnique({

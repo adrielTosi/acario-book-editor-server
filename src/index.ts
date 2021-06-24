@@ -15,6 +15,7 @@ import { Context } from "./types";
 import { UserResolver } from "./resolvers/UserResolver";
 import { BookResolver } from "./resolvers/BookResolver";
 import { ChapterResolver } from "./resolvers/ChapterResolver";
+import { NoteResolver } from "./resolvers/NoteResolver";
 
 declare module "express-session" {
   interface Session {
@@ -52,7 +53,7 @@ const main = async () => {
 
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
-      resolvers: [UserResolver, BookResolver, ChapterResolver],
+      resolvers: [UserResolver, BookResolver, ChapterResolver, NoteResolver],
       validate: false,
     }),
     context: ({ req, res }): Context => ({ req, res, redis, prisma }),

@@ -1,8 +1,7 @@
 import { Field, ObjectType } from "type-graphql";
-import { Note } from "./Note";
 
 @ObjectType()
-export class Chapter {
+export class Note {
   @Field()
   id: string;
 
@@ -18,8 +17,8 @@ export class Chapter {
   @Field()
   bookId: string;
 
-  @Field(() => [Note], { nullable: true })
-  notes?: Note[];
+  @Field()
+  chapterId: string;
 
   // -------
   @Field(() => String)

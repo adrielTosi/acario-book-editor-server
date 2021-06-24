@@ -17,6 +17,7 @@ model User {
   password  String
   books     Book[]
   chapters  Chapter[]
+  notes     Note[]
   createdAt DateTime  @default(now())
 }
 
@@ -27,6 +28,7 @@ model Book {
   description String    @db.VarChar(200)
   title       String
   chapters    Chapter[]
+  notes       Note[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
@@ -39,7 +41,22 @@ model Chapter {
   bookId    String
   author    User     @relation(fields: [authorId], references: [id])
   authorId  String
+  notes     Note[]
   createdAt DateTime @default(now())
   // chapterNumber: position of chapter
+  updatedAt DateTime @updatedAt
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  title     String
+  text      String
+  book      Book     @relation(fields: [bookId], references: [id])
+  bookId    String
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  String
+  chapter   Chapter  @relation(fields: [chapterId], references: [id])
+  chapterId String
+  createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
