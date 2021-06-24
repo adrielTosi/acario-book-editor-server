@@ -113,7 +113,6 @@ export class ChapterResolver {
 
   /**
    * @UPDATE_CHAPTER
-   * Begin with updating all the fields at all times,
    */
   @Mutation(() => Chapter)
   @UseMiddleware(isLogged)

@@ -28,7 +28,7 @@ model Book {
   title       String
   chapters    Chapter[]
   createdAt   DateTime  @default(now())
-  // updatedAt
+  updatedAt   DateTime  @updatedAt
 }
 
 model Chapter {
@@ -41,5 +41,5 @@ model Chapter {
   authorId  String
   createdAt DateTime @default(now())
   // chapterNumber: position of chapter
-  // updatedAt
+  updatedAt DateTime @updatedAt
 }
