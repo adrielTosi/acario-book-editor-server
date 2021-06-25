@@ -84,9 +84,9 @@ export class BookResolver {
     const book = await ctx.prisma.book.findUnique({
       where: { id: bookId },
       include: {
-        chapters: { include: { notes: true } },
+        chapters: true,
         author: true,
-        notes: true,
+        notes: { include: { chapter: true } },
       },
     });
 
@@ -116,7 +116,10 @@ export class BookResolver {
 
     const books = await ctx.prisma.book.findMany({
       where: { authorId: author.id },
-      include: { chapters: { include: { notes: true } }, notes: true },
+      include: {
+        chapters: { include: { notes: true } },
+        notes: { include: { chapter: true } },
+      },
     });
 
     if (!books) {
@@ -135,7 +138,9 @@ export class BookResolver {
     @Arg("bookId") id: string,
     @Ctx() ctx: Context
   ): Promise<Boolean> {
-    const book = await ctx.prisma.book.findUnique({ where: { id } });
+    const book = await ctx.prisma.book.findUnique({
+      where: { id },
+    });
 
     if (!book) {
       throw new UserInputError("No book found.");
