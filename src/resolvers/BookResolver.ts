@@ -52,6 +52,7 @@ export class BookResolver {
             title: "First Chapter",
             authorId: user.id,
             text: "sample chapter",
+            chapterNumber: 1,
           },
         },
       },
@@ -84,7 +85,11 @@ export class BookResolver {
     const book = await ctx.prisma.book.findUnique({
       where: { id: bookId },
       include: {
-        chapters: true,
+        chapters: {
+          orderBy: {
+            chapterNumber: "asc",
+          },
+        },
         author: true,
         notes: { include: { chapter: true } },
       },
@@ -117,7 +122,10 @@ export class BookResolver {
     const books = await ctx.prisma.book.findMany({
       where: { authorId: author.id },
       include: {
-        chapters: { include: { notes: true } },
+        chapters: {
+          include: { notes: true },
+          orderBy: { chapterNumber: "asc" },
+        },
         notes: { include: { chapter: true } },
       },
     });

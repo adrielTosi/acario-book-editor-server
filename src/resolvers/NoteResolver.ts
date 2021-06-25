@@ -83,7 +83,10 @@ export class NoteResolver {
       throw new AuthenticationError("Invalid user.");
     }
 
-    const note = await ctx.prisma.note.findUnique({ where: { id: noteId } });
+    const note = await ctx.prisma.note.findUnique({
+      where: { id: noteId },
+      include: { chapter: true },
+    });
     if (!note) {
       throw new UserInputError("Note doesn't exist or has been deleted.");
     }
@@ -124,6 +127,7 @@ export class NoteResolver {
 
     const note = await ctx.prisma.note.findMany({
       where: chapterId ? { bookId, chapterId } : { bookId },
+      include: { chapter: true },
     });
     if (!note) {
       throw new UserInputError("Note doesn't exist or has been deleted.");

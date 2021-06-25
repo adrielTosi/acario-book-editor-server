@@ -49,20 +49,24 @@ export class ChapterResolver {
 
     const book = await ctx.prisma.book.findUnique({
       where: { id: data.bookId },
+      include: { chapters: true },
     });
     if (!book) {
       throw new UserInputError("Book doesn't exist or has been deleted.");
     }
-
     if (book.authorId !== author.id) {
       throw new AuthenticationError("Book is not yours.");
     }
+
+    const totalNumberOfChapters = book.chapters.length;
+
     const chapter = await ctx.prisma.chapter.create({
       data: {
         title: data.title,
         text: data.text,
         authorId: author.id,
         bookId: book.id,
+        chapterNumber: totalNumberOfChapters + 1,
       },
     });
 
@@ -93,7 +97,10 @@ export class ChapterResolver {
       throw new AuthenticationError("Book is not yours.");
     }
 
-    const chapters = await ctx.prisma.chapter.findMany({ where: { bookId } });
+    const chapters = await ctx.prisma.chapter.findMany({
+      where: { bookId },
+      orderBy: { chapterNumber: "asc" },
+    });
     return chapters;
   }
 

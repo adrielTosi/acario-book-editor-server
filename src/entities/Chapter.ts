@@ -13,6 +13,9 @@ export class Chapter {
   text: string;
 
   @Field()
+  chapterNumber: number;
+
+  @Field()
   authorId: string;
 
   @Field()
