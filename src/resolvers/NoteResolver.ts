@@ -161,4 +161,43 @@ export class NoteResolver {
     await ctx.prisma.note.delete({ where: { id: noteId } });
     return true;
   }
+
+  /**
+   * @UPDATE_NOTE
+   */
+  @Mutation(() => Note)
+  @UseMiddleware(isLogged)
+  async updateNote(
+    @Arg("noteId") noteId: string,
+    @Arg("title") title: string,
+    @Arg("text") text: string,
+    @Ctx() ctx: Context
+  ): Promise<Note> {
+    const author = await ctx.prisma.user.findUnique({
+      where: { id: ctx.req.session.userId },
+    });
+
+    if (!author) {
+      throw new AuthenticationError("Invalid user.");
+    }
+
+    const note = await ctx.prisma.note.findUnique({ where: { id: noteId } });
+    if (!note) {
+      throw new UserInputError("Note doesn't exist or has been deleted.");
+    }
+
+    if (note.authorId !== author.id) {
+      throw new AuthenticationError("Note is not yours.");
+    }
+
+    const updatedNote = await ctx.prisma.note.update({
+      where: { id: note.id },
+      data: {
+        title,
+        text,
+      },
+    });
+
+    return updatedNote;
+  }
 }
