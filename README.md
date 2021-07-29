@@ -20,4 +20,8 @@ Backend code for Book Editor made for personal use.
 
 - Reordering Chapters
 
+- Merging Chapters
+
+- New chapter after certain point
+
 - Notes per words/phrases

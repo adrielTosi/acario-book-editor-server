@@ -58,7 +58,6 @@ export class BookResolver {
       },
       include: {
         chapters: true,
-        notes: true,
       },
     });
 
@@ -91,7 +90,6 @@ export class BookResolver {
           },
         },
         author: true,
-        notes: { include: { chapter: true } },
       },
     });
 
@@ -123,10 +121,8 @@ export class BookResolver {
       where: { authorId: author.id },
       include: {
         chapters: {
-          include: { notes: true },
           orderBy: { chapterNumber: "asc" },
         },
-        notes: { include: { chapter: true } },
       },
     });
 
@@ -158,7 +154,6 @@ export class BookResolver {
       throw new AuthenticationError("Book is not yours.");
     }
 
-    await ctx.prisma.note.deleteMany({ where: { bookId: id } });
     await ctx.prisma.chapter.deleteMany({ where: { bookId: id } });
     await ctx.prisma.book.delete({ where: { id } });
     return true;
