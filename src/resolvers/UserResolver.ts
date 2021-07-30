@@ -21,6 +21,8 @@ class InputCreateUser {
   @Field()
   email: string;
   @Field()
+  username: string;
+  @Field()
   password: string;
 }
 
@@ -40,12 +42,17 @@ export class UserResolver {
       throw new UserInputError("Please add a Valid email");
     }
 
-    // ? SHOULD I LET PRISMA DEAL WITH ERRORS? It would make this call to check if user exists unnecessary
-    const user = await ctx.prisma.user.findUnique({
+    const userByEmail = await ctx.prisma.user.findUnique({
       where: { email: data.email },
     });
-    if (user) {
+    const userByUsername = await ctx.prisma.user.findUnique({
+      where: { username: data.username },
+    });
+    if (userByEmail) {
       throw new UserInputError("A user with this email already exists.");
+    }
+    if (userByUsername) {
+      throw new UserInputError("A user with this username already exists.");
     }
 
     const hashPassword = await argon2.hash(data.password);
@@ -54,6 +61,7 @@ export class UserResolver {
         email: data.email,
         name: data.name,
         password: hashPassword,
+        username: data.username,
       },
     });
     ctx.req.session.userId = newUser.id;
