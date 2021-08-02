@@ -77,6 +77,7 @@ export class ChapterResolver {
                 data: data.tags.map((tag) => ({
                   label: tag.label,
                   value: tag.value,
+                  authorId: author.id,
                 })),
               },
             }

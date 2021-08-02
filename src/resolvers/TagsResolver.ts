@@ -1,8 +1,17 @@
 import { AuthenticationError, UserInputError } from "apollo-server-express";
 import { Tag } from "../entities/Tag";
 import { Context } from "src/types";
-import { Arg, Ctx, Field, InputType, Mutation, Resolver } from "type-graphql";
+import {
+  Arg,
+  Ctx,
+  Field,
+  InputType,
+  Mutation,
+  Resolver,
+  UseMiddleware,
+} from "type-graphql";
 import InputTags from "./inputs/InputTags";
+import isLogged from "../middleware/isLogged";
 
 @InputType()
 class InputCreateTags {
@@ -22,6 +31,7 @@ export class TagsResolver {
    * @CREATE_TAGS
    */
   @Mutation(() => [Tag])
+  @UseMiddleware(isLogged)
   async createTags(
     @Arg("data") data: InputCreateTags,
     @Ctx() ctx: Context
@@ -51,6 +61,7 @@ export class TagsResolver {
           label: tag.label,
           value: tag.value,
           bookId: book.id,
+          authorId: author.id,
         })),
       });
 
@@ -77,6 +88,7 @@ export class TagsResolver {
           label: tag.label,
           value: tag.value,
           chapterId: chapter.id,
+          authorId: author.id,
         })),
       });
       const tags = await ctx.prisma.tag.findMany({
@@ -92,18 +104,34 @@ export class TagsResolver {
   /**
    * @DELETE_TAG
    */
-  // async deleteTag(@Arg("tagId") id: string, @Ctx() ctx: Context): Promise<boolean> {
-  //   const author = await ctx.prisma.user.findUnique({
-  //     where: { id: ctx.req.session.userId },
-  //   });
+  @Mutation(() => Boolean)
+  @UseMiddleware(isLogged)
+  async deleteTag(
+    @Arg("id") id: string,
+    @Ctx() ctx: Context
+  ): Promise<boolean> {
+    const author = await ctx.prisma.user.findUnique({
+      where: { id: ctx.req.session.userId },
+    });
 
-  //   if (!author) {
-  //     throw new AuthenticationError("Invalid user.");
-  //   }
+    if (!author) {
+      throw new AuthenticationError("Invalid user.");
+    }
 
-  //   const tag = await ctx.prisma.tag.findUnique({where: {id}})
-  //   if(!tag) {
-  //     throw new UserInputError("Tag dosn't exist or has been deleted.");
-  //   }
-  // }
+    const tag = await ctx.prisma.tag.findUnique({ where: { id } });
+    if (!tag) {
+      throw new UserInputError("Tag dosn't exist or has been deleted.");
+    }
+    if (tag.authorId !== author.id) {
+      throw new AuthenticationError("Book or Chapter is not yours.");
+    }
+
+    try {
+      await ctx.prisma.tag.delete({ where: { id } });
+    } catch (err) {
+      throw new UserInputError("Something went wrong, please try again.");
+    }
+
+    return true;
+  }
 }

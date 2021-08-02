@@ -65,6 +65,7 @@ export class BookResolver {
                 data: data.tags.map((tag) => ({
                   label: tag.label,
                   value: tag.value,
+                  authorId: user.id,
                 })),
               },
             }
