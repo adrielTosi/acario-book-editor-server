@@ -138,6 +138,9 @@ export class BookResolver {
       include: {
         chapters: {
           orderBy: { chapterNumber: "asc" },
+          include: {
+            tags: true,
+          },
         },
         tags: true,
       },
