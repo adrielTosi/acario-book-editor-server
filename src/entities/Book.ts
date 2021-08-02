@@ -22,7 +22,7 @@ export class Book {
   chapters: Chapter[];
 
   @Field(() => [Tag], { nullable: true })
-  tags: Tag[];
+  tags?: Tag[];
 
   // -------
   @Field(() => String)

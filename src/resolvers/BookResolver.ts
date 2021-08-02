@@ -12,6 +12,7 @@ import {
 import { Book } from "../entities/Book";
 import { isLogged } from "../middleware/isLogged";
 import { Context } from "../types";
+import InputTag from "./inputs/InputTags";
 
 @InputType()
 export class InputNewBook {
@@ -23,15 +24,6 @@ export class InputNewBook {
 
   @Field(() => [InputTag], { nullable: true })
   tags?: InputTag[];
-}
-
-@InputType()
-export class InputTag {
-  @Field()
-  label: string;
-
-  @Field()
-  value: string;
 }
 
 @Resolver((_of) => Book)

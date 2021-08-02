@@ -15,6 +15,7 @@ import { AuthenticationError, UserInputError } from "apollo-server-express";
 import InputUpdateChapter, {
   TUpdateChapterData,
 } from "./inputs/InputUpdateChapter";
+import InputTag from "./inputs/InputTags";
 
 @InputType()
 class InputCreateChapter {
@@ -26,6 +27,9 @@ class InputCreateChapter {
 
   @Field()
   text: string;
+
+  @Field(() => [InputTag], { nullable: true })
+  tags?: InputTag[];
 }
 
 @Resolver((_of) => Chapter)
@@ -67,6 +71,19 @@ export class ChapterResolver {
         authorId: author.id,
         bookId: book.id,
         chapterNumber: totalNumberOfChapters + 1,
+        tags: data.tags
+          ? {
+              createMany: {
+                data: data.tags.map((tag) => ({
+                  label: tag.label,
+                  value: tag.value,
+                })),
+              },
+            }
+          : undefined,
+      },
+      include: {
+        tags: !!data.tags,
       },
     });
 
@@ -100,6 +117,9 @@ export class ChapterResolver {
     const chapters = await ctx.prisma.chapter.findMany({
       where: { bookId },
       orderBy: { chapterNumber: "asc" },
+      include: {
+        tags: true,
+      },
     });
     return chapters;
   }
@@ -131,6 +151,9 @@ export class ChapterResolver {
 
     const chapter = await ctx.prisma.chapter.findUnique({
       where: { id: chapterId },
+      include: {
+        tags: true,
+      },
     });
     if (!chapter) {
       throw new UserInputError("Chapter doesn't exist or has been deleted.");
@@ -185,6 +208,9 @@ export class ChapterResolver {
     const updatedChapter = ctx.prisma.chapter.update({
       where: { id: data.chapterId },
       data: updateData!,
+      include: {
+        tags: true,
+      },
     });
     return updatedChapter;
   }

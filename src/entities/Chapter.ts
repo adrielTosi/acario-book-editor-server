@@ -1,4 +1,5 @@
 import { Field, ObjectType } from "type-graphql";
+import { Tag } from "./Tag";
 
 @ObjectType()
 export class Chapter {
@@ -19,6 +20,9 @@ export class Chapter {
 
   @Field()
   bookId: string;
+
+  @Field(() => [Tag], { nullable: true })
+  tags?: Tag[];
 
   // -------
   @Field(() => String)
