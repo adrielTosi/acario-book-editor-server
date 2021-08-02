@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Tag" ALTER COLUMN "bookId" DROP NOT NULL,
+ALTER COLUMN "chapterId" DROP NOT NULL;

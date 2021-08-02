@@ -1,6 +1,4 @@
 import { AuthenticationError, UserInputError } from "apollo-server-express";
-import { Book } from "../entities/Book";
-import { Context } from "../types";
 import {
   Arg,
   Ctx,
@@ -11,7 +9,9 @@ import {
   Resolver,
   UseMiddleware,
 } from "type-graphql";
+import { Book } from "../entities/Book";
 import { isLogged } from "../middleware/isLogged";
+import { Context } from "../types";
 
 @InputType()
 export class InputNewBook {
@@ -20,6 +20,18 @@ export class InputNewBook {
 
   @Field()
   description: string;
+
+  @Field(() => [InputTag], { nullable: true })
+  tags?: InputTag[];
+}
+
+@InputType()
+export class InputTag {
+  @Field()
+  label: string;
+
+  @Field()
+  value: string;
 }
 
 @Resolver((_of) => Book)
@@ -31,8 +43,8 @@ export class BookResolver {
   @Mutation(() => Book)
   @UseMiddleware(isLogged)
   async createBook(
-    @Arg("bookData") data: InputNewBook,
-    @Ctx() ctx: Context
+    @Ctx() ctx: Context,
+    @Arg("data") data: InputNewBook
   ): Promise<Book> {
     const user = await ctx.prisma.user.findUnique({
       where: { id: ctx.req.session.userId },
@@ -55,9 +67,20 @@ export class BookResolver {
             chapterNumber: 1,
           },
         },
+        tags: data.tags
+          ? {
+              createMany: {
+                data: data.tags.map((tag) => ({
+                  label: tag.label,
+                  value: tag.value,
+                })),
+              },
+            }
+          : undefined,
       },
       include: {
         chapters: true,
+        tags: !!data.tags,
       },
     });
 
@@ -90,6 +113,7 @@ export class BookResolver {
           },
         },
         author: true,
+        tags: true,
       },
     });
 
@@ -123,6 +147,7 @@ export class BookResolver {
         chapters: {
           orderBy: { chapterNumber: "asc" },
         },
+        tags: true,
       },
     });
 
