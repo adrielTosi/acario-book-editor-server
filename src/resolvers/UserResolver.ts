@@ -121,12 +121,12 @@ export class UserResolver {
     return ctx.prisma.user.findMany();
   }
 
+  /**
+   * @CURRENT_USER
+   */
+
   @Query(() => User)
   async currentUser(@Ctx() ctx: Context): Promise<User> {
-    if (!ctx.req.session.userId) {
-      throw new AuthenticationError("Please login.");
-    }
-
     const user = await ctx.prisma.user.findUnique({
       where: { id: ctx.req.session.userId },
     });

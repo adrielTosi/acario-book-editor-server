@@ -19,6 +19,8 @@ model User {
   books     Book[]
   chapters  Chapter[]
   tags      Tag[]
+  following Follow[]  @relation("leader")
+  followers Follow[]  @relation("follow")
   createdAt DateTime  @default(now())
 }
 
@@ -59,4 +61,13 @@ model Tag {
   author    User     @relation(fields: [authorId], references: [id])
   authorId  String
   createdAt DateTime @default(now())
+}
+
+model Follow {
+  leader   User   @relation("leader", fields: [leaderId], references: [id])
+  leaderId String
+  follow   User   @relation("follow", fields: [followId], references: [id])
+  followId String
+
+  @@id([leaderId, followId])
 }
