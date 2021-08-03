@@ -116,4 +116,33 @@ export class CommentResolver {
 
     return updatedComment;
   }
+
+  /**
+   * @DELETE_COMMENT
+   */
+  @Mutation(() => Boolean)
+  @UseMiddleware(isLogged)
+  async deleteComment(
+    @Arg("id") id: string,
+    @Ctx() ctx: Context
+  ): Promise<boolean> {
+    const author = await ctx.prisma.user.findUnique({
+      where: { id: ctx.req.session.userId },
+    });
+
+    if (!author) {
+      throw new AuthenticationError("Invalid user.");
+    }
+
+    const foundComment = await ctx.prisma.comment.findUnique({ where: { id } });
+    if (!foundComment) {
+      throw new UserInputError("Comment doesn't exist or has been deleted");
+    }
+    if (foundComment.authorId !== author.id) {
+      throw new AuthenticationError("Comment is not yours");
+    }
+
+    await ctx.prisma.comment.delete({ where: { id: foundComment.id } });
+    return true;
+  }
 }
