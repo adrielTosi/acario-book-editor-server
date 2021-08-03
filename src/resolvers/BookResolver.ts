@@ -107,6 +107,7 @@ export class BookResolver {
         },
         author: true,
         tags: true,
+        comments: true,
       },
     });
 
@@ -144,6 +145,7 @@ export class BookResolver {
           },
         },
         tags: true,
+        comments: true,
       },
     });
 

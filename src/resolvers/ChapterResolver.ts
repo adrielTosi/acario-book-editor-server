@@ -120,6 +120,7 @@ export class ChapterResolver {
       orderBy: { chapterNumber: "asc" },
       include: {
         tags: true,
+        comments: true,
       },
     });
     return chapters;
@@ -154,6 +155,7 @@ export class ChapterResolver {
       where: { id: chapterId },
       include: {
         tags: true,
+        comments: true,
       },
     });
     if (!chapter) {

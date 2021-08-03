@@ -17,6 +17,7 @@ import { BookResolver } from "./resolvers/BookResolver";
 import { ChapterResolver } from "./resolvers/ChapterResolver";
 import { TagsResolver } from "./resolvers/TagsResolver";
 import { FollowResolver } from "./resolvers/FollowResolver";
+import { CommentResolver } from "./resolvers/CommentResolver";
 
 declare module "express-session" {
   interface Session {
@@ -60,6 +61,7 @@ const main = async () => {
         ChapterResolver,
         TagsResolver,
         FollowResolver,
+        CommentResolver,
       ],
       validate: false,
     }),

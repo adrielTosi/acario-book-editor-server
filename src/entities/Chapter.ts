@@ -1,4 +1,5 @@
 import { Field, ObjectType } from "type-graphql";
+import { Comment } from "./Comment";
 import { Tag } from "./Tag";
 
 @ObjectType()
@@ -20,6 +21,9 @@ export class Chapter {
 
   @Field()
   bookId: string;
+
+  @Field(() => [Comment])
+  comments?: Comment[];
 
   @Field(() => [Tag], { nullable: true })
   tags?: Tag[];
