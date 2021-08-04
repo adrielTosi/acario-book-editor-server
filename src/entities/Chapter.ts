@@ -1,4 +1,4 @@
-import { Field, ObjectType } from "type-graphql";
+import { Field, Int, ObjectType } from "type-graphql";
 import { Comment } from "./Comment";
 import { Tag } from "./Tag";
 
@@ -15,6 +15,12 @@ export class Chapter {
 
   @Field()
   chapterNumber: number;
+
+  @Field(() => Int)
+  likes: number;
+
+  @Field(() => Int)
+  dislikes: number;
 
   @Field()
   authorId: string;
