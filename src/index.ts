@@ -18,6 +18,7 @@ import { ChapterResolver } from "./resolvers/ChapterResolver";
 import { TagsResolver } from "./resolvers/TagsResolver";
 import { FollowResolver } from "./resolvers/FollowResolver";
 import { CommentResolver } from "./resolvers/CommentResolver";
+import { ReactionResolver } from "./resolvers/ReactionResolver";
 
 declare module "express-session" {
   interface Session {
@@ -62,6 +63,7 @@ const main = async () => {
         TagsResolver,
         FollowResolver,
         CommentResolver,
+        ReactionResolver,
       ],
       validate: false,
     }),

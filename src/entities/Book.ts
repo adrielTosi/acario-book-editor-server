@@ -1,5 +1,5 @@
 import { Length } from "class-validator";
-import { Field, ObjectType } from "type-graphql";
+import { Field, Int, ObjectType } from "type-graphql";
 import { Chapter } from "./Chapter";
 import { Comment } from "./Comment";
 import { Tag } from "./Tag";
@@ -19,8 +19,14 @@ export class Book {
   @Field()
   authorId: string;
 
+  @Field(() => Int)
+  likes: number;
+
+  @Field(() => Int)
+  dislikes: number;
+
   @Field(() => [Chapter])
-  chapters: Chapter[];
+  chapters?: Chapter[];
 
   @Field(() => [Comment])
   comments?: Comment[];

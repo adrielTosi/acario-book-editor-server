@@ -11,31 +11,35 @@ generator client {
 }
 
 model User {
-  id        String    @id @default(cuid())
-  email     String    @unique
-  username  String    @unique
-  name      String
-  password  String
-  books     Book[]
-  chapters  Chapter[]
-  tags      Tag[]
-  following Follow[]  @relation("leader")
-  followers Follow[]  @relation("follow")
-  comments  Comment[]
-  createdAt DateTime  @default(now())
+  id            String         @id @default(cuid())
+  email         String         @unique
+  username      String         @unique
+  name          String
+  password      String
+  books         Book[]
+  chapters      Chapter[]
+  tags          Tag[]
+  following     Follow[]       @relation("leader")
+  followers     Follow[]       @relation("follow")
+  comments      Comment[]
+  bookReactions BookReaction[]
+  createdAt     DateTime       @default(now())
 }
 
 model Book {
-  id          String    @id @default(cuid())
-  author      User      @relation(fields: [authorId], references: [id])
+  id          String         @id @default(cuid())
+  author      User           @relation(fields: [authorId], references: [id])
   authorId    String
-  description String    @db.VarChar(200)
+  description String         @db.VarChar(200)
   title       String
   chapters    Chapter[]
   tags        Tag[]
   comments    Comment[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  reactions   BookReaction[]
+  likes       Int            @default(0)
+  dislikes    Int            @default(0)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 }
 
 model Chapter {
@@ -49,6 +53,8 @@ model Chapter {
   authorId      String
   tags          Tag[]
   comments      Comment[]
+  likes         Int       @default(0)
+  dislikes      Int       @default(0)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -86,4 +92,14 @@ model Comment {
   chapterId String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model BookReaction {
+  author   User   @relation(fields: [authorId], references: [id])
+  authorId String
+  value    Int
+  book     Book   @relation(fields: [bookId], references: [id])
+  bookId   String
+
+  @@id([authorId, bookId])
 }

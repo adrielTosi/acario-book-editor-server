@@ -1,0 +1,203 @@
+import { Reaction } from "../entities/Reaction";
+import isLogged from "../middleware/isLogged";
+import {
+  Arg,
+  Ctx,
+  Field,
+  Mutation,
+  ObjectType,
+  Resolver,
+  UseMiddleware,
+} from "type-graphql";
+import { Context } from "../types";
+import {
+  ApolloError,
+  AuthenticationError,
+  UserInputError,
+} from "apollo-server-express";
+import { Book } from "../entities/Book";
+
+@ObjectType()
+export class ReactionResponse {
+  @Field({ description: "The book itself" })
+  book: Book;
+
+  @Field()
+  hasVoted: boolean;
+}
+
+@Resolver((_of) => Reaction)
+export class ReactionResolver {
+  /**
+   * @REACT_TO_BOOK
+   * ? Do I need to return the whole book here?
+   */
+  @Mutation(() => ReactionResponse)
+  @UseMiddleware(isLogged)
+  async reactToBook(
+    @Arg("id") bookId: string,
+    @Arg("value") value: 1 | -1,
+    @Ctx() ctx: Context
+  ): Promise<ReactionResponse> {
+    const author = await ctx.prisma.user.findUnique({
+      where: { id: ctx.req.session.userId },
+    });
+
+    if (!author) {
+      throw new AuthenticationError("Invalid user.");
+    }
+
+    const book = await ctx.prisma.book.findUnique({ where: { id: bookId } });
+    if (!book) {
+      throw new UserInputError("Book doesn't exist");
+    }
+
+    const alreadyVoted = await ctx.prisma.bookReaction.findUnique({
+      where: { authorId_bookId: { authorId: author.id, bookId: book.id } },
+    });
+
+    // * user liked
+    if (value === 1) {
+      // not voted yet - create reaction, increase likes from book
+      if (!alreadyVoted) {
+        const createReaction = ctx.prisma.bookReaction.create({
+          data: { authorId: author.id, value: 1, bookId: book.id },
+        });
+        const updateBook = ctx.prisma.book.update({
+          where: { id: book.id },
+          data: { likes: { increment: 1 } },
+        });
+
+        const [_, updatedBook] = await ctx.prisma.$transaction([
+          createReaction,
+          updateBook,
+        ]);
+        if (!updatedBook) {
+          throw new ApolloError("Something went wrong, refresh and try again.");
+        }
+        return { book: updatedBook, hasVoted: true };
+      }
+      // already voted - user is removing like - delete the like and subtract likes from book
+      if (alreadyVoted?.value === 1) {
+        const deleteReaction = ctx.prisma.bookReaction.delete({
+          where: {
+            authorId_bookId: {
+              authorId: alreadyVoted.authorId,
+              bookId: book.id,
+            },
+          },
+        });
+        const updateBook = ctx.prisma.book.update({
+          where: { id: book.id },
+          data: { likes: { decrement: 1 } },
+        });
+
+        const [_, updatedBook] = await ctx.prisma.$transaction([
+          deleteReaction,
+          updateBook,
+        ]);
+        if (!updatedBook) {
+          throw new ApolloError("Something went wrong, refresh and try again.");
+        }
+        return { book: updatedBook, hasVoted: false };
+      }
+      // already voted - user is changing like to positive - update reaction, decrease dislike, increase like
+      if (alreadyVoted?.value === -1) {
+        const updateReaction = ctx.prisma.bookReaction.update({
+          where: {
+            authorId_bookId: {
+              authorId: alreadyVoted.authorId,
+              bookId: book.id,
+            },
+          },
+          data: { value: 1 },
+        });
+        const updatebook = ctx.prisma.book.update({
+          where: { id: book.id },
+          data: { likes: { increment: 1 }, dislikes: { decrement: 1 } },
+        });
+
+        const [_, updatedBook] = await ctx.prisma.$transaction([
+          updateReaction,
+          updatebook,
+        ]);
+        if (!updatedBook) {
+          throw new ApolloError("Something went wrong, refresh and try again.");
+        }
+        return { book: updatedBook, hasVoted: true };
+      }
+      // * user disliked
+    } else if (value === -1) {
+      // not voted yet - create reaction, decrease likes from book
+      if (!alreadyVoted) {
+        const createReaction = ctx.prisma.bookReaction.create({
+          data: { authorId: author.id, value: -1, bookId: book.id },
+        });
+        const updateBook = ctx.prisma.book.update({
+          where: { id: book.id },
+          data: { dislikes: { increment: 1 } },
+        });
+
+        const [_, updatedBook] = await ctx.prisma.$transaction([
+          createReaction,
+          updateBook,
+        ]);
+        if (!updatedBook) {
+          throw new ApolloError("Something went wrong, refresh and try again.");
+        }
+        return { book: updatedBook, hasVoted: true };
+      }
+      // already voted - user is removing like - delete the like and decrement dislikes from book
+      if (alreadyVoted?.value === -1) {
+        const deleteReaction = ctx.prisma.bookReaction.delete({
+          where: {
+            authorId_bookId: {
+              authorId: alreadyVoted.authorId,
+              bookId: book.id,
+            },
+          },
+        });
+        const updateBook = ctx.prisma.book.update({
+          where: { id: book.id },
+          data: { dislikes: { decrement: 1 } },
+        });
+
+        const [_, updatedBook] = await ctx.prisma.$transaction([
+          deleteReaction,
+          updateBook,
+        ]);
+        if (!updatedBook) {
+          throw new ApolloError("Something went wrong, refresh and try again.");
+        }
+        return { book: updatedBook, hasVoted: false };
+      }
+      // already voted - user is changing like to negative - update reaction, increase dislike, decrease like
+      if (alreadyVoted?.value === 1) {
+        const updateReaction = ctx.prisma.bookReaction.update({
+          where: {
+            authorId_bookId: {
+              authorId: alreadyVoted.authorId,
+              bookId: book.id,
+            },
+          },
+          data: { value: -1 },
+        });
+        const updatebook = ctx.prisma.book.update({
+          where: { id: book.id },
+          data: { likes: { decrement: 1 }, dislikes: { increment: 1 } },
+        });
+
+        const [_, updatedBook] = await ctx.prisma.$transaction([
+          updateReaction,
+          updatebook,
+        ]);
+        if (!updatedBook) {
+          throw new ApolloError("Something went wrong, refresh and try again.");
+        }
+        return { book: updatedBook, hasVoted: true };
+      }
+    }
+
+    throw new ApolloError("Something went wrong, please try again.");
+  }
+}
