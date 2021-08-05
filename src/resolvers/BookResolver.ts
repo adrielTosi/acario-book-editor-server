@@ -1,10 +1,16 @@
-import { AuthenticationError, UserInputError } from "apollo-server-express";
+import {
+  ApolloError,
+  AuthenticationError,
+  UserInputError,
+} from "apollo-server-express";
+import { User } from "../entities/User";
 import {
   Arg,
   Ctx,
   Field,
   InputType,
   Mutation,
+  ObjectType,
   Query,
   Resolver,
   UseMiddleware,
@@ -26,8 +32,66 @@ export class InputNewBook {
   tags?: InputTag[];
 }
 
+@ObjectType()
+export class PaginatedTimelineBooks {
+  @Field(() => [Book])
+  books: Book[];
+
+  @Field()
+  hasMore?: boolean;
+}
+
 @Resolver((_of) => Book)
 export class BookResolver {
+  /**
+   * @GET
+   * @TIMELINE_BOOKS
+   */
+  @Query(() => PaginatedTimelineBooks)
+  @UseMiddleware(isLogged)
+  async getTimelineBooks(
+    @Arg("take") take: number,
+    @Arg("cursor", () => String, { nullable: true }) cursor: string | null, // a DateTime value
+    @Ctx() ctx: Context
+  ): Promise<PaginatedTimelineBooks> {
+    const user = await ctx.prisma.user.findUnique({
+      where: { id: ctx.req.session.userId },
+      include: { following: true },
+    });
+    if (!user) {
+      throw new AuthenticationError("Invalid user.");
+    }
+
+    let cursorDate: Date | undefined;
+    if (cursor) {
+      cursorDate = new Date(parseInt(cursor));
+    }
+
+    const books = await ctx.prisma.book.findMany({
+      take,
+      where: {
+        authorId: { in: user.following.map((follow) => follow.followId) },
+        createdAt: cursor ? { lt: cursorDate } : undefined,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      include: {
+        author: true,
+        tags: true,
+      },
+    });
+    if (!books) {
+      throw new ApolloError(
+        "Something went wrong, please refresh and tr again."
+      );
+    }
+
+    let hasMore = true;
+    if (books.length < take) hasMore = false;
+    return { books, hasMore };
+  }
+
   // TODO: CREATE `UPDATE` MUTATION
   /**
    * @CREATE_BOOK

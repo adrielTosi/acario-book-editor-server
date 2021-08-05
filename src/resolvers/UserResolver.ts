@@ -129,6 +129,7 @@ export class UserResolver {
   async currentUser(@Ctx() ctx: Context): Promise<User> {
     const user = await ctx.prisma.user.findUnique({
       where: { id: ctx.req.session.userId },
+      include: { following: true },
     });
 
     if (!user) {

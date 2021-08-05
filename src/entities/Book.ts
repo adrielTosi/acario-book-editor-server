@@ -3,6 +3,7 @@ import { Field, Int, ObjectType } from "type-graphql";
 import { Chapter } from "./Chapter";
 import { Comment } from "./Comment";
 import { Tag } from "./Tag";
+import { User } from "./User";
 
 @ObjectType()
 export class Book {
@@ -18,6 +19,9 @@ export class Book {
 
   @Field()
   authorId: string;
+
+  @Field(() => User)
+  author?: User;
 
   @Field(() => Int)
   likes: number;
