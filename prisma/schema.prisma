@@ -10,6 +10,10 @@ generator client {
   provider = "prisma-client-js"
 }
 
+generator dbml {
+  provider = "prisma-dbml-generator"
+}
+
 model User {
   id               String            @id @default(cuid())
   email            String            @unique
@@ -47,9 +51,9 @@ model Chapter {
   id            String            @id @default(cuid())
   title         String
   text          String
-  chapterNumber Int
-  book          Book              @relation(fields: [bookId], references: [id])
-  bookId        String
+  chapterNumber Int               @default(-1)
+  book          Book?             @relation(fields: [bookId], references: [id])
+  bookId        String?
   author        User              @relation(fields: [authorId], references: [id])
   authorId      String
   tags          Tag[]

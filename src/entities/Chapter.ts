@@ -1,6 +1,7 @@
 import { Field, Int, ObjectType } from "type-graphql";
 import { Book } from "./Book";
 import { Comment } from "./Comment";
+import { ChapterReaction } from "./Reaction";
 import { Tag } from "./Tag";
 import { User } from "./User";
 
@@ -30,14 +31,17 @@ export class Chapter {
   @Field(() => User)
   author?: User;
 
-  @Field()
-  bookId: string;
+  @Field(() => String, { nullable: true })
+  bookId: string | null;
 
-  @Field(() => Book)
-  book?: Book;
+  @Field(() => Book, { nullable: true })
+  book?: Book | null;
 
   @Field(() => [Comment])
   comments?: Comment[];
+
+  @Field(() => [ChapterReaction], { nullable: true })
+  reactions?: ChapterReaction[];
 
   @Field(() => [Tag], { nullable: true })
   tags?: Tag[];

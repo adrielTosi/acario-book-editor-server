@@ -1,0 +1,145 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table User {
+  id String [pk]
+  email String [unique, not null]
+  username String [unique, not null]
+  name String [not null]
+  password String [not null]
+  books Book [not null]
+  chapters Chapter [not null]
+  tags Tag [not null]
+  following Follow [not null]
+  followers Follow [not null]
+  comments Comment [not null]
+  bookReactions BookReaction [not null]
+  chapterReactions ChapterReaction [not null]
+  createdAt DateTime [default: `now()`, not null]
+}
+
+Table Book {
+  id String [pk]
+  author User [not null]
+  authorId String [not null]
+  description String [not null]
+  title String [not null]
+  chapters Chapter [not null]
+  tags Tag [not null]
+  comments Comment [not null]
+  reactions BookReaction [not null]
+  likes Int [not null, default: 0]
+  dislikes Int [not null, default: 0]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table Chapter {
+  id String [pk]
+  title String [not null]
+  text String [not null]
+  chapterNumber Int [not null, default: -1]
+  book Book
+  bookId String
+  author User [not null]
+  authorId String [not null]
+  tags Tag [not null]
+  comments Comment [not null]
+  reactions ChapterReaction [not null]
+  likes Int [not null, default: 0]
+  dislikes Int [not null, default: 0]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table Tag {
+  id String [pk]
+  label String [not null]
+  value String [not null]
+  book Book
+  bookId String
+  chapter Chapter
+  chapterId String
+  author User [not null]
+  authorId String [not null]
+  createdAt DateTime [default: `now()`, not null]
+}
+
+Table Follow {
+  leader User [not null]
+  leaderId String [not null]
+  follow User [not null]
+  followId String [not null]
+
+  indexes {
+    (leaderId, followId) [pk]
+  }
+}
+
+Table Comment {
+  id String [pk]
+  text String [not null]
+  author User [not null]
+  authorId String [not null]
+  book Book
+  bookId String
+  chapter Chapter
+  chapterId String
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table BookReaction {
+  author User [not null]
+  authorId String [not null]
+  value Int [not null]
+  book Book [not null]
+  bookId String [not null]
+
+  indexes {
+    (authorId, bookId) [pk]
+  }
+}
+
+Table ChapterReaction {
+  author User [not null]
+  authorId String [not null]
+  value Int [not null]
+  chapter Chapter [not null]
+  chapterId String [not null]
+
+  indexes {
+    (authorId, chapterId) [pk]
+  }
+}
+
+Ref: Book.authorId > User.id
+
+Ref: Chapter.bookId > Book.id
+
+Ref: Chapter.authorId > User.id
+
+Ref: Tag.bookId > Book.id
+
+Ref: Tag.chapterId > Chapter.id
+
+Ref: Tag.authorId > User.id
+
+Ref: Follow.leaderId > User.id
+
+Ref: Follow.followId > User.id
+
+Ref: Comment.authorId > User.id
+
+Ref: Comment.bookId > Book.id
+
+Ref: Comment.chapterId > Chapter.id
+
+Ref: BookReaction.authorId > User.id
+
+Ref: BookReaction.bookId > Book.id
+
+Ref: ChapterReaction.authorId > User.id
+
+Ref: ChapterReaction.chapterId > Chapter.id

@@ -21,14 +21,15 @@ import InputUpdateChapter, {
   TUpdateChapterData,
 } from "./inputs/InputUpdateChapter";
 import InputTag from "./inputs/InputTags";
+import { Book } from "@prisma/client";
 
 @InputType()
 class InputCreateChapter {
   @Field()
   title: string;
 
-  @Field()
-  bookId: string;
+  @Field(() => String, { nullable: true })
+  bookId?: string;
 
   @Field()
   text: string;
@@ -92,7 +93,7 @@ export class ChapterResolver {
 
     if (!chapters) {
       throw new ApolloError(
-        "Something went wrong, please refresh and tr again."
+        "Something went wrong, please refresh and try again."
       );
     }
 
@@ -118,26 +119,31 @@ export class ChapterResolver {
       throw new AuthenticationError("Invalid user.");
     }
 
-    const book = await ctx.prisma.book.findUnique({
-      where: { id: data.bookId },
-      include: { chapters: true },
-    });
-    if (!book) {
-      throw new UserInputError("Book doesn't exist or has been deleted.");
+    let book:
+      | (Book & {
+          chapters: Chapter[];
+        })
+      | null = null;
+    if (data.bookId) {
+      book = await ctx.prisma.book.findUnique({
+        where: { id: data.bookId },
+        include: { chapters: true },
+      });
     }
-    if (book.authorId !== author.id) {
+
+    if (book && book.authorId !== author.id) {
       throw new AuthenticationError("Book is not yours.");
     }
 
-    const totalNumberOfChapters = book.chapters.length;
+    const totalNumberOfChapters = book?.chapters.length;
 
     const chapter = await ctx.prisma.chapter.create({
       data: {
         title: data.title,
         text: data.text,
         authorId: author.id,
-        bookId: book.id,
-        chapterNumber: totalNumberOfChapters + 1,
+        bookId: book ? book.id : undefined,
+        chapterNumber: book ? totalNumberOfChapters! + 1 : undefined,
         tags: data.tags
           ? {
               createMany: {
@@ -160,6 +166,7 @@ export class ChapterResolver {
 
   /**
    * @GET_CHAPTERS
+   * TODO: THIS SHOULD BE `GET CHAPTERS FROM BOOK`
    */
   @Query(() => [Chapter])
   @UseMiddleware(isLogged)

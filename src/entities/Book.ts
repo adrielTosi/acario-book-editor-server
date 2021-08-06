@@ -2,6 +2,7 @@ import { Length } from "class-validator";
 import { Field, Int, ObjectType } from "type-graphql";
 import { Chapter } from "./Chapter";
 import { Comment } from "./Comment";
+import { BookReaction } from "./Reaction";
 import { Tag } from "./Tag";
 import { User } from "./User";
 
@@ -34,6 +35,9 @@ export class Book {
 
   @Field(() => [Comment])
   comments?: Comment[];
+
+  @Field(() => [BookReaction])
+  reactions?: BookReaction[];
 
   @Field(() => [Tag], { nullable: true })
   tags?: Tag[];

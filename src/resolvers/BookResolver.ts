@@ -44,6 +44,12 @@ export class PaginatedTimelineBooks {
 @Resolver((_of) => Book)
 export class BookResolver {
   /**
+   * ======================
+   * QUERIES
+   * ======================
+   */
+
+  /**
    * @GET
    * @TIMELINE_BOOKS
    */
@@ -93,58 +99,6 @@ export class BookResolver {
     let hasMore = true;
     if (books.length < take) hasMore = false;
     return { books, hasMore };
-  }
-
-  // TODO: CREATE `UPDATE` MUTATION
-  /**
-   * @CREATE_BOOK
-   */
-  @Mutation(() => Book)
-  @UseMiddleware(isLogged)
-  async createBook(
-    @Ctx() ctx: Context,
-    @Arg("data") data: InputNewBook
-  ): Promise<Book> {
-    const user = await ctx.prisma.user.findUnique({
-      where: { id: ctx.req.session.userId },
-    });
-
-    if (!user) {
-      throw new AuthenticationError("Invalid user.");
-    }
-
-    const newBook = await ctx.prisma.book.create({
-      data: {
-        description: data.description,
-        title: data.title,
-        authorId: user.id,
-        chapters: {
-          create: {
-            title: "First Chapter",
-            authorId: user.id,
-            text: "sample chapter",
-            chapterNumber: 1,
-          },
-        },
-        tags: data.tags
-          ? {
-              createMany: {
-                data: data.tags.map((tag) => ({
-                  label: tag.label,
-                  value: tag.value,
-                  authorId: user.id,
-                })),
-              },
-            }
-          : undefined,
-      },
-      include: {
-        chapters: true,
-        tags: !!data.tags,
-      },
-    });
-
-    return newBook;
   }
 
   /**
@@ -224,6 +178,56 @@ export class BookResolver {
   }
 
   /**
+   * ======================
+   * MUTATION
+   * ======================
+   */
+
+  // TODO: CREATE `UPDATE` MUTATION
+  /**
+   * @CREATE_BOOK
+   */
+  @Mutation(() => Book)
+  @UseMiddleware(isLogged)
+  async createBook(
+    @Ctx() ctx: Context,
+    @Arg("data") data: InputNewBook
+  ): Promise<Book> {
+    const user = await ctx.prisma.user.findUnique({
+      where: { id: ctx.req.session.userId },
+    });
+
+    if (!user) {
+      throw new AuthenticationError("Invalid user.");
+    }
+
+    const newBook = await ctx.prisma.book.create({
+      data: {
+        description: data.description,
+        title: data.title,
+        authorId: user.id,
+        tags: data.tags
+          ? {
+              createMany: {
+                data: data.tags.map((tag) => ({
+                  label: tag.label,
+                  value: tag.value,
+                  authorId: user.id,
+                })),
+              },
+            }
+          : undefined,
+      },
+      include: {
+        chapters: true,
+        tags: !!data.tags,
+      },
+    });
+
+    return newBook;
+  }
+
+  /**
    * @DELETE_BOOK
    */
   @Mutation(() => Boolean)
@@ -248,4 +252,10 @@ export class BookResolver {
     await ctx.prisma.book.delete({ where: { id } });
     return true;
   }
+
+  // /**
+  //  * @UPDATE_BOOK
+  //  */
+  //  @Mutation(() => Boolean)
+  //  @UseMiddleware(isLogged)
 }
