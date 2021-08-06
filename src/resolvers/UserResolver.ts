@@ -12,7 +12,9 @@ import {
   Mutation,
   Query,
   Resolver,
+  UseMiddleware,
 } from "type-graphql";
+import isLogged from "../middleware/isLogged";
 
 @InputType({ description: "Data for creating new user" })
 class InputCreateUser {
@@ -126,6 +128,7 @@ export class UserResolver {
    */
 
   @Query(() => User)
+  @UseMiddleware(isLogged)
   async currentUser(@Ctx() ctx: Context): Promise<User> {
     const user = await ctx.prisma.user.findUnique({
       where: { id: ctx.req.session.userId },
@@ -134,6 +137,38 @@ export class UserResolver {
 
     if (!user) {
       throw new AuthenticationError("Please login.");
+    }
+
+    return user;
+  }
+
+  /**
+   * @GET_USER
+   */
+  @Query(() => User)
+  @UseMiddleware(isLogged)
+  async getUser(@Arg("id") id: string, @Ctx() ctx: Context): Promise<User> {
+    const currentUser = await ctx.prisma.user.findUnique({
+      where: { id: ctx.req.session.userId },
+    });
+
+    if (!currentUser) {
+      throw new AuthenticationError("Please login.");
+    }
+
+    const user = await ctx.prisma.user.findUnique({
+      where: { id },
+      include: {
+        following: true,
+        followers: true,
+        books: {
+          include: { chapters: true },
+        },
+        chapters: { include: { book: true } },
+      },
+    });
+    if (!user) {
+      throw new UserInputError("This user does not exist or has been deleted.");
     }
 
     return user;

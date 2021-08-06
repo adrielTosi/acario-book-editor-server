@@ -27,7 +27,7 @@ export class User {
   books?: Book[];
 
   @Field(() => [Chapter])
-  chapter?: Chapter[];
+  chapters?: Chapter[];
 
   @Field(() => [Tag])
   tags?: Tag[];
