@@ -166,11 +166,10 @@ export class ChapterResolver {
 
   /**
    * @GET_CHAPTERS
-   * TODO: THIS SHOULD BE `GET CHAPTERS FROM BOOK`
    */
   @Query(() => [Chapter])
   @UseMiddleware(isLogged)
-  async getChapters(
+  async getChaptersFromBook(
     @Arg("bookId") bookId: string,
     @Ctx() ctx: Context
   ): Promise<Chapter[]> {
