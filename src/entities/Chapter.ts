@@ -1,6 +1,8 @@
 import { Field, Int, ObjectType } from "type-graphql";
+import { Book } from "./Book";
 import { Comment } from "./Comment";
 import { Tag } from "./Tag";
+import { User } from "./User";
 
 @ObjectType()
 export class Chapter {
@@ -25,8 +27,14 @@ export class Chapter {
   @Field()
   authorId: string;
 
+  @Field(() => User)
+  author?: User;
+
   @Field()
   bookId: string;
+
+  @Field(() => Book)
+  book?: Book;
 
   @Field(() => [Comment])
   comments?: Comment[];

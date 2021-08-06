@@ -3,7 +3,7 @@ import {
   AuthenticationError,
   UserInputError,
 } from "apollo-server-express";
-import { User } from "../entities/User";
+
 import {
   Arg,
   Ctx,
@@ -79,6 +79,9 @@ export class BookResolver {
       include: {
         author: true,
         tags: true,
+        chapters: true,
+        comments: true,
+        reactions: true,
       },
     });
     if (!books) {

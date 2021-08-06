@@ -5,13 +5,18 @@ import {
   Field,
   InputType,
   Mutation,
+  ObjectType,
   Query,
   Resolver,
   UseMiddleware,
 } from "type-graphql";
 import isLogged from "../middleware/isLogged";
 import { Context } from "../types";
-import { AuthenticationError, UserInputError } from "apollo-server-express";
+import {
+  ApolloError,
+  AuthenticationError,
+  UserInputError,
+} from "apollo-server-express";
 import InputUpdateChapter, {
   TUpdateChapterData,
 } from "./inputs/InputUpdateChapter";
@@ -32,8 +37,70 @@ class InputCreateChapter {
   tags?: InputTag[];
 }
 
+@ObjectType()
+export class PaginatedTimelineChapters {
+  @Field(() => [Chapter])
+  chapters: Chapter[];
+
+  @Field()
+  hasMore?: boolean;
+}
+
 @Resolver((_of) => Chapter)
 export class ChapterResolver {
+  /**
+   * @GET
+   * @TIMELINE_BOOKS
+   */
+  @Query(() => PaginatedTimelineChapters)
+  @UseMiddleware(isLogged)
+  async getTimelineChapters(
+    @Arg("take") take: number,
+    @Arg("cursor", () => String, { nullable: true }) cursor: string | null, // a DateTime value
+    @Ctx() ctx: Context
+  ): Promise<PaginatedTimelineChapters> {
+    const user = await ctx.prisma.user.findUnique({
+      where: { id: ctx.req.session.userId },
+      include: { following: true },
+    });
+    if (!user) {
+      throw new AuthenticationError("Invalid user.");
+    }
+
+    let cursorDate: Date | undefined;
+    if (cursor) {
+      cursorDate = new Date(parseInt(cursor));
+    }
+
+    const chapters = await ctx.prisma.chapter.findMany({
+      take,
+      where: {
+        authorId: { in: user.following.map((follow) => follow.followId) },
+        createdAt: cursor ? { lt: cursorDate } : undefined,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      include: {
+        author: true,
+        tags: true,
+        reactions: true,
+        book: true,
+        comments: true,
+      },
+    });
+
+    if (!chapters) {
+      throw new ApolloError(
+        "Something went wrong, please refresh and tr again."
+      );
+    }
+
+    let hasMore = true;
+    if (chapters.length < take) hasMore = false;
+    return { chapters, hasMore };
+  }
+
   /**
    * @CREATE_CHAPTER
    */
