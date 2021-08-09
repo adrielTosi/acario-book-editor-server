@@ -292,6 +292,53 @@ export class ChapterResolver {
   }
 
   /**
+   *
+   * @ADD_CHAPTER_TO_BOOK
+   */
+  @Mutation(() => Chapter)
+  @UseMiddleware(isLogged)
+  async addChapterToBook(
+    @Arg("chapterId") chapterId: string,
+    @Arg("bookId") bookId: string,
+    @Ctx() ctx: Context
+  ): Promise<Chapter> {
+    const book = await ctx.prisma.book.findUnique({
+      where: { id: bookId },
+      include: { chapters: true },
+    });
+    if (!book) {
+      throw new UserInputError("Book doesn't exist or has been deleted.");
+    }
+
+    const chapter = await ctx.prisma.chapter.findUnique({
+      where: { id: chapterId },
+    });
+    if (!chapter) {
+      throw new UserInputError("Chapter doesn't exist or has been deleted.");
+    }
+
+    const user = await ctx.prisma.user.findUnique({
+      where: { id: ctx.req.session.userId },
+    });
+    if (!user) {
+      throw new AuthenticationError("Invalid user.");
+    }
+    if (book.authorId !== user.id || chapter.authorId !== user.id) {
+      throw new AuthenticationError("Book or chapter is not yours.");
+    }
+
+    const chapterNumber = book.chapters.length;
+    const updatedChapter = ctx.prisma.chapter.update({
+      where: { id: chapter.id },
+      data: { bookId: book.id, chapterNumber: chapterNumber + 1 },
+      include: { book: true },
+    });
+    if (!updatedChapter) {
+      throw new ApolloError("Something went wrogn, please try again.");
+    }
+    return updatedChapter;
+  }
+  /**
    * @DELETE_CHAPTER
    */
   @Mutation(() => Boolean)
