@@ -3,7 +3,7 @@ import { Book } from "./Book";
 import { Chapter } from "./Chapter";
 import { Comment } from "./Comment";
 import { Follow } from "./Follow";
-import { Reaction } from "./Reaction";
+import { BookReaction, ChapterReaction } from "./Reaction";
 import { Tag } from "./Tag";
 
 @ObjectType()
@@ -41,11 +41,11 @@ export class User {
   @Field(() => [Comment])
   comments?: Comment[];
 
-  @Field(() => [Reaction])
-  bookReactions?: Reaction[];
+  @Field(() => [BookReaction])
+  bookReactions?: BookReaction[];
 
-  @Field(() => [Reaction])
-  chapterReactions?: Reaction[];
+  @Field(() => [ChapterReaction])
+  chapterReactions?: ChapterReaction[];
 
   // -------
   @Field(() => String)

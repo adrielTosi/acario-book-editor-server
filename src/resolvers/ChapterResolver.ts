@@ -12,14 +12,8 @@ import {
 } from "type-graphql";
 import isLogged from "../middleware/isLogged";
 import { Context } from "../types";
-import {
-  ApolloError,
-  AuthenticationError,
-  UserInputError,
-} from "apollo-server-express";
-import InputUpdateChapter, {
-  TUpdateChapterData,
-} from "./inputs/InputUpdateChapter";
+import { ApolloError, AuthenticationError, UserInputError } from "apollo-server-express";
+import InputUpdateChapter, { TUpdateChapterData } from "./inputs/InputUpdateChapter";
 import InputTag from "./inputs/InputTags";
 import { Book } from "@prisma/client";
 
@@ -92,9 +86,7 @@ export class ChapterResolver {
     });
 
     if (!chapters) {
-      throw new ApolloError(
-        "Something went wrong, please refresh and try again."
-      );
+      throw new ApolloError("Something went wrong, please refresh and try again.");
     }
 
     let hasMore = true;
@@ -205,7 +197,7 @@ export class ChapterResolver {
   @Query(() => Chapter)
   @UseMiddleware(isLogged)
   async getChapter(
-    @Arg("bookId") bookId: string,
+    @Arg("bookId", { nullable: true }) bookId: string,
     @Arg("chapterId") chapterId: string,
     @Ctx() ctx: Context
   ): Promise<Chapter> {
@@ -216,11 +208,12 @@ export class ChapterResolver {
     if (!author) {
       throw new AuthenticationError("Invalid user.");
     }
-    const book = await ctx.prisma.book.findUnique({ where: { id: bookId } });
-    if (!book) {
-      throw new UserInputError("Book doesn't exist or has been deleted.");
+    let book: Book | null = null;
+    if (bookId) {
+      book = await ctx.prisma.book.findUnique({ where: { id: bookId } });
     }
-    if (book.authorId !== author.id) {
+
+    if (book && book.authorId !== author.id) {
       throw new AuthenticationError("Book is not yours.");
     }
 
@@ -229,6 +222,9 @@ export class ChapterResolver {
       include: {
         tags: true,
         comments: true,
+        book: true,
+        author: true,
+        reactions: true,
       },
     });
     if (!chapter) {
