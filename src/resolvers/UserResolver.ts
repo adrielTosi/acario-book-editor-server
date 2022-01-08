@@ -1,19 +1,10 @@
-import argon2 from "argon2";
+import bcrypt from "bcrypt";
 import { UserInputError, AuthenticationError } from "apollo-server-express";
 import v from "validator";
 
 import { User } from "../entities/User";
 import { Context } from "../types";
-import {
-  Arg,
-  Ctx,
-  Field,
-  InputType,
-  Mutation,
-  Query,
-  Resolver,
-  UseMiddleware,
-} from "type-graphql";
+import { Arg, Ctx, Field, InputType, Mutation, Query, Resolver, UseMiddleware } from "type-graphql";
 import isLogged from "../middleware/isLogged";
 
 @InputType({ description: "Data for creating new user" })
@@ -32,12 +23,13 @@ class InputCreateUser {
 export class UserResolver {
   /**
    * @CREATE_USER
+   * TODO: ERROR WHEN ASKING FOR RETURNING SOMETHING DIFFERENT THAN name, email, username, password
    */
   @Mutation(() => User)
   async createUser(
     @Arg("userData") data: InputCreateUser,
     @Ctx() ctx: Context
-  ): Promise<User> {
+  ): Promise<Pick<User, "name" | "email" | "username" | "password">> {
     // TODO: add validation, lenght etc
 
     if (!v.isEmail(data.email)) {
@@ -57,7 +49,8 @@ export class UserResolver {
       throw new UserInputError("A user with this username already exists.");
     }
 
-    const hashPassword = await argon2.hash(data.password);
+    const salt = await bcrypt.genSalt(10);
+    const hashPassword = await bcrypt.hash(data.password, salt);
     const newUser = await ctx.prisma.user.create({
       data: {
         email: data.email,
@@ -86,7 +79,7 @@ export class UserResolver {
       throw new UserInputError("Incorrect email or password.");
     }
 
-    const rightPassword = await argon2.verify(user.password, password);
+    const rightPassword = await bcrypt.compare(password, user.password);
     if (!rightPassword) {
       throw new UserInputError("Incorrect email or password.");
     }

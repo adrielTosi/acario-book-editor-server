@@ -5,12 +5,16 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "prisma:generate": "prisma generate",
+    "prisma:deploy": "prisma migrate deploy",
     "watch": "tsc -w",
     "dev": "nodemon dist/index.js"
   },
   "author": "Adriel Tosi",
   "license": "ISC",
   "devDependencies": {
+    "@types/bcrypt": "^5.0.0",
     "@types/connect-redis": "^0.0.16",
     "@types/express": "^4.17.12",
     "@types/express-session": "^1.17.3",
@@ -28,11 +32,12 @@
   "dependencies": {
     "@prisma/client": "^2.25.0",
     "apollo-server-express": "^2.25.1",
-    "argon2": "^0.28.2",
+    "bcrypt": "^5.0.1",
     "class-validator": "^0.13.1",
     "connect-redis": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^10.0.0",
+    "dotenv-safe": "^8.2.0",
     "express": "^4.17.1",
     "express-session": "^1.17.2",
     "graphql": "^15.5.0",

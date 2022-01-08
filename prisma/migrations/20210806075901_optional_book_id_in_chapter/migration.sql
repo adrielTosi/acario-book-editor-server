@@ -1,3 +1,0 @@
--- AlterTable
-ALTER TABLE "Chapter" ALTER COLUMN "bookId" DROP NOT NULL,
-ALTER COLUMN "chapterNumber" DROP NOT NULL;

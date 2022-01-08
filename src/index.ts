@@ -1,4 +1,5 @@
 import "reflect-metadata";
+import "dotenv-safe";
 import { ApolloServer } from "apollo-server-express";
 import { PrismaClient } from "@prisma/client";
 
@@ -34,8 +35,9 @@ const main = async () => {
   const app = express();
 
   const RedisStore = redisStore(session);
-  const redis = new Redis();
+  const redis = new Redis(process.env.REDIS_URL);
 
+  app.set("trust proxy", 1);
   app.use(
     session({
       name: process.env.COOKIE_NAME,
@@ -46,6 +48,8 @@ const main = async () => {
         httpOnly: true,
         sameSite: "lax",
         secure: process.env.NODE_ENV === "production",
+        // COULD HAVE PROBLEM WITH FORWARDING COOCKIES
+        domain: process.env.NODE_ENV === "production" ? ".scrivono.xyz" : undefined,
       },
       resave: false,
       saveUninitialized: false,
@@ -68,6 +72,8 @@ const main = async () => {
       validate: false,
     }),
     context: ({ req, res }): Context => ({ req, res, redis, prisma }),
+    playground: true,
+    introspection: true,
   });
 
   apolloServer.applyMiddleware({
@@ -75,14 +81,10 @@ const main = async () => {
     cors: false,
   });
 
-  const port = process.env.PORT || 4000;
+  const port = parseInt(process.env.PORT) || 4000;
   app.listen(port, () => {
     console.log("app listen on port: ", port);
   });
 };
 
-main()
-  .catch((err) => console.error(err))
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+main().catch((err) => console.error(err));
