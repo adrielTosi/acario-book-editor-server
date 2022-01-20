@@ -1,16 +1,8 @@
 import { AuthenticationError, UserInputError } from "apollo-server-express";
 import { Tag } from "../entities/Tag";
 import { Context } from "src/types";
-import {
-  Arg,
-  Ctx,
-  Field,
-  InputType,
-  Mutation,
-  Resolver,
-  UseMiddleware,
-} from "type-graphql";
-import InputTags from "./inputs/InputTags";
+import { Arg, Ctx, Field, InputType, Mutation, Resolver, UseMiddleware } from "type-graphql";
+import InputTags from "./interfaces/InputTags";
 import isLogged from "../middleware/isLogged";
 
 @InputType()
@@ -32,10 +24,7 @@ export class TagsResolver {
    */
   @Mutation(() => [Tag])
   @UseMiddleware(isLogged)
-  async createTags(
-    @Arg("data") data: InputCreateTags,
-    @Ctx() ctx: Context
-  ): Promise<InputTags[]> {
+  async createTags(@Arg("data") data: InputCreateTags, @Ctx() ctx: Context): Promise<InputTags[]> {
     const author = await ctx.prisma.user.findUnique({
       where: { id: ctx.req.session.userId },
     });
@@ -106,10 +95,7 @@ export class TagsResolver {
    */
   @Mutation(() => Boolean)
   @UseMiddleware(isLogged)
-  async deleteTag(
-    @Arg("id") id: string,
-    @Ctx() ctx: Context
-  ): Promise<boolean> {
+  async deleteTag(@Arg("id") id: string, @Ctx() ctx: Context): Promise<boolean> {
     const author = await ctx.prisma.user.findUnique({
       where: { id: ctx.req.session.userId },
     });

@@ -1,4 +1,4 @@
-import { Field, ID, Int, ObjectType } from "type-graphql";
+import { Field, Int, ObjectType } from "type-graphql";
 import { Book } from "./Book";
 import { Chapter } from "./Chapter";
 import { User } from "./User";

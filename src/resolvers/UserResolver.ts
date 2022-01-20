@@ -39,12 +39,13 @@ export class UserResolver {
     const userByEmail = await ctx.prisma.user.findUnique({
       where: { email: data.email },
     });
-    const userByUsername = await ctx.prisma.user.findUnique({
-      where: { username: data.username },
-    });
     if (userByEmail) {
       throw new UserInputError("A user with this email already exists.");
     }
+
+    const userByUsername = await ctx.prisma.user.findUnique({
+      where: { username: data.username },
+    });
     if (userByUsername) {
       throw new UserInputError("A user with this username already exists.");
     }
@@ -149,7 +150,7 @@ export class UserResolver {
    */
   @Query(() => User)
   @UseMiddleware(isLogged)
-  async getUser(@Arg("id") id: string, @Ctx() ctx: Context): Promise<User> {
+  async getUser(@Arg("username") username: string, @Ctx() ctx: Context): Promise<User> {
     const currentUser = await ctx.prisma.user.findUnique({
       where: { id: ctx.req.session.userId },
     });
@@ -159,14 +160,14 @@ export class UserResolver {
     }
 
     const user = await ctx.prisma.user.findUnique({
-      where: { id },
+      where: { username },
       include: {
         following: true,
         followers: true,
         books: {
-          include: { chapters: true },
+          include: { chapters: true, tags: true },
         },
-        chapters: { include: { book: true } },
+        chapters: { include: { book: true, tags: true } },
       },
     });
     if (!user) {

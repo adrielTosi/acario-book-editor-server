@@ -1,4 +1,5 @@
-import { Chapter } from "../entities/Chapter";
+import { Book } from "@prisma/client";
+import { ApolloError, AuthenticationError, UserInputError } from "apollo-server-express";
 import {
   Arg,
   Ctx,
@@ -10,12 +11,11 @@ import {
   Resolver,
   UseMiddleware,
 } from "type-graphql";
+import { Chapter } from "../entities/Chapter";
 import isLogged from "../middleware/isLogged";
 import { Context } from "../types";
-import { ApolloError, AuthenticationError, UserInputError } from "apollo-server-express";
-import InputUpdateChapter, { TUpdateChapterData } from "./inputs/InputUpdateChapter";
-import InputTag from "./inputs/InputTags";
-import { Book } from "@prisma/client";
+import InputTag from "./interfaces/InputTags";
+import InputUpdateChapter, { TUpdateChapterData } from "./interfaces/InputUpdateChapter";
 
 @InputType()
 class InputCreateChapter {
@@ -157,7 +157,7 @@ export class ChapterResolver {
   }
 
   /**
-   * @GET_CHAPTERS
+   * @GET_CHAPTERS_FROM_BOOK
    */
   @Query(() => [Chapter])
   @UseMiddleware(isLogged)
@@ -231,6 +231,36 @@ export class ChapterResolver {
       throw new UserInputError("Chapter doesn't exist or has been deleted.");
     }
     return chapter;
+  }
+
+  /**
+   * @GET_CHAPTERS_FROM_USER
+   */
+  @Query(() => [Chapter])
+  async getChaptersFromUser(
+    @Arg("username") username: string,
+    @Ctx() ctx: Context
+  ): Promise<Chapter[]> {
+    const author = await ctx.prisma.user.findUnique({
+      where: { username },
+    });
+
+    if (!author) {
+      throw new AuthenticationError("User doesn't exist or has been deleted.");
+    }
+
+    const chapters = await ctx.prisma.chapter.findMany({
+      where: { authorId: author.id },
+      include: {
+        tags: true,
+        comments: { include: { author: true } },
+        book: true,
+        author: true,
+        reactions: true,
+      },
+    });
+
+    return chapters;
   }
 
   /**

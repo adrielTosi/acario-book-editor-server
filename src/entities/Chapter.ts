@@ -37,7 +37,7 @@ export class Chapter {
   @Field(() => Book, { nullable: true })
   book?: Book | null;
 
-  @Field(() => [Comment])
+  @Field(() => [Comment], { nullable: true })
   comments?: Comment[];
 
   @Field(() => [ChapterReaction], { nullable: true })

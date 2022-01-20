@@ -1,4 +1,5 @@
 import { Field, ID, ObjectType } from "type-graphql";
+import { User } from "./User";
 
 @ObjectType()
 export class Comment {
@@ -7,6 +8,9 @@ export class Comment {
 
   @Field()
   text: string;
+
+  @Field(() => User)
+  author?: User;
 
   @Field()
   authorId: string;

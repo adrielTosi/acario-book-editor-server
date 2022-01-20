@@ -1,8 +1,4 @@
-import {
-  ApolloError,
-  AuthenticationError,
-  UserInputError,
-} from "apollo-server-express";
+import { ApolloError, AuthenticationError, UserInputError } from "apollo-server-express";
 
 import {
   Arg,
@@ -18,7 +14,7 @@ import {
 import { Book } from "../entities/Book";
 import { isLogged } from "../middleware/isLogged";
 import { Context } from "../types";
-import InputTag from "./inputs/InputTags";
+import InputTag from "./interfaces/InputTags";
 
 @InputType()
 export class InputNewBook {
@@ -91,9 +87,7 @@ export class BookResolver {
       },
     });
     if (!books) {
-      throw new ApolloError(
-        "Something went wrong, please refresh and tr again."
-      );
+      throw new ApolloError("Something went wrong, please refresh and tr again.");
     }
 
     let hasMore = true;
@@ -106,10 +100,7 @@ export class BookResolver {
    */
   @Query(() => Book)
   @UseMiddleware(isLogged)
-  async getBook(
-    @Arg("bookId") bookId: string,
-    @Ctx() ctx: Context
-  ): Promise<Book> {
+  async getBook(@Arg("bookId") bookId: string, @Ctx() ctx: Context): Promise<Book> {
     const author = await ctx.prisma.user.findUnique({
       where: { id: ctx.req.session.userId },
     });
@@ -147,13 +138,17 @@ export class BookResolver {
    */
   @Query(() => [Book])
   @UseMiddleware(isLogged)
-  async getBooks(@Ctx() ctx: Context): Promise<Book[]> {
+  async getBooks(
+    @Ctx() ctx: Context,
+    @Arg("userId", { nullable: true }) userId: string
+  ): Promise<Book[]> {
+    // if id is passed get that user, otherwise get logged in user
     const author = await ctx.prisma.user.findUnique({
-      where: { id: ctx.req.session.userId },
+      where: { id: userId ? userId : ctx.req.session.userId },
     });
 
     if (!author) {
-      throw new AuthenticationError("Invalid user.");
+      throw new AuthenticationError("User doesn't exist or has been deleted.");
     }
 
     const books = await ctx.prisma.book.findMany({
@@ -189,10 +184,7 @@ export class BookResolver {
    */
   @Mutation(() => Book)
   @UseMiddleware(isLogged)
-  async createBook(
-    @Ctx() ctx: Context,
-    @Arg("data") data: InputNewBook
-  ): Promise<Book> {
+  async createBook(@Ctx() ctx: Context, @Arg("data") data: InputNewBook): Promise<Book> {
     const user = await ctx.prisma.user.findUnique({
       where: { id: ctx.req.session.userId },
     });
@@ -232,10 +224,7 @@ export class BookResolver {
    */
   @Mutation(() => Boolean)
   @UseMiddleware(isLogged)
-  async deleteBook(
-    @Arg("bookId") id: string,
-    @Ctx() ctx: Context
-  ): Promise<Boolean> {
+  async deleteBook(@Arg("bookId") id: string, @Ctx() ctx: Context): Promise<Boolean> {
     const book = await ctx.prisma.book.findUnique({
       where: { id },
     });
