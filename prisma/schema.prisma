@@ -15,20 +15,25 @@ generator dbml {
 }
 
 model User {
-  id               String            @id @default(cuid())
-  email            String            @unique
-  username         String            @unique
-  name             String
-  password         String
-  books            Book[]
-  chapters         Chapter[]
-  tags             Tag[]
-  following        Follow[]          @relation("leader")
-  followers        Follow[]          @relation("follow")
-  comments         Comment[]
-  bookReactions    BookReaction[]
-  chapterReactions ChapterReaction[]
-  createdAt        DateTime          @default(now())
+  id                String            @id @default(cuid())
+  email             String            @unique
+  username          String            @unique
+  name              String
+  password          String
+  bio               String            @default("") @db.VarChar(400)
+  avatarType        String            @default("croodles")
+  avatarSeed        String            @default("scrivono")
+  books             Book[]
+  chapters          Chapter[]
+  tags              Tag[]
+  following         Follow[]          @relation("follow")
+  numberOfFollowing Int               @default(0)
+  followers         Follow[]          @relation("leader")
+  numberOfFollowers Int               @default(0)
+  comments          Comment[]
+  bookReactions     BookReaction[]
+  chapterReactions  ChapterReaction[]
+  createdAt         DateTime          @default(now())
 }
 
 model Book {

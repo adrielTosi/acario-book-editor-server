@@ -29,39 +29,44 @@ export class FollowResolver {
     @Arg("data") data: InputFollow,
     @Ctx() ctx: Context
   ): Promise<InputFollow> {
-    const leader = await ctx.prisma.user.findUnique({
+    const follower = await ctx.prisma.user.findUnique({
       where: { id: ctx.req.session.userId },
     });
 
-    if (!leader) {
+    if (!follower) {
       throw new AuthenticationError("Invalid user.");
     }
-
-    const follow = await ctx.prisma.user.findUnique({
+    
+    const leader = await ctx.prisma.user.findUnique({
       where: { id: data.followId },
     });
-
-    if (!follow) {
+    
+    if (!leader) {
       throw new UserInputError(
         "The person you are trying to follow does not exist or has been deleted."
       );
     }
-    if (leader.id === follow.id) {
+    
+    if (leader.id === follower.id) {
       throw new UserInputError("You trying to follow yourself? That's low...");
     }
 
     const alreadyFollow = await ctx.prisma.follow.findUnique({
       where: {
-        leaderId_followId: { leaderId: leader.id, followId: follow.id },
+        leaderId_followId: { leaderId: leader.id, followId: follower.id },
       },
     });
     if (alreadyFollow) {
       throw new UserInputError("You already follow this person.");
     }
+    const [followObject] = await ctx.prisma.$transaction([
+      ctx.prisma.follow.create({
+        data: { leaderId: leader.id, followId: follower.id },
+      }),
+      ctx.prisma.user.update({where: {id: leader.id}, data: {numberOfFollowers: {increment: 1}} }),
+      ctx.prisma.user.update({where: { id: follower.id }, data: {numberOfFollowing: {increment: 1}}})
+    ])
 
-    const followObject = await ctx.prisma.follow.create({
-      data: { leaderId: leader.id, followId: follow.id },
-    });
     return followObject;
   }
 
@@ -74,11 +79,11 @@ export class FollowResolver {
     @Arg("data") data: InputFollow,
     @Ctx() ctx: Context
   ): Promise<boolean> {
-    const leader = await ctx.prisma.user.findUnique({
+    const user = await ctx.prisma.user.findUnique({
       where: { id: ctx.req.session.userId },
     });
 
-    if (!leader) {
+    if (!user) {
       throw new AuthenticationError("Invalid user.");
     }
 
@@ -91,7 +96,7 @@ export class FollowResolver {
         "The person you are trying to unfollow does not exist or has been deleted."
       );
     }
-    if (leader.id === unfollow.id) {
+    if (user.id === unfollow.id) {
       throw new UserInputError(
         "You trying to unfollow yourself? That should not be possible."
       );
@@ -99,18 +104,23 @@ export class FollowResolver {
 
     const alreadyFollow = await ctx.prisma.follow.findUnique({
       where: {
-        leaderId_followId: { leaderId: leader.id, followId: unfollow.id },
+        leaderId_followId: { leaderId: unfollow.id, followId: user.id },
       },
     });
     if (!alreadyFollow) {
       throw new UserInputError("You don't follow this person.");
     }
 
-    await ctx.prisma.follow.delete({
-      where: {
-        leaderId_followId: { leaderId: leader.id, followId: unfollow.id },
-      },
-    });
+    await ctx.prisma.$transaction([
+      ctx.prisma.follow.delete({
+        where: {
+          leaderId_followId: { leaderId: unfollow.id, followId: user.id },
+        },
+      }),
+      ctx.prisma.user.update({where: {id: unfollow.id}, data: {numberOfFollowers: {decrement: 1}} }),
+      ctx.prisma.user.update({where: { id: user.id }, data: {numberOfFollowing: {decrement: 1}}})
+    ])
+
     return true;
   }
 }

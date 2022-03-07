@@ -23,6 +23,12 @@ export class User {
   @Field()
   password: string;
 
+  @Field()
+  numberOfFollowing: number;
+
+  @Field()
+  numberOfFollowers: number;
+
   @Field(() => [Book])
   books?: Book[];
 
