@@ -17,6 +17,9 @@ export class Chapter {
   text: string;
 
   @Field()
+  description: string;
+
+  @Field()
   chapterNumber: number;
 
   @Field(() => Int)

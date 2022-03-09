@@ -5,6 +5,12 @@ import { Comment } from "./Comment";
 import { Follow } from "./Follow";
 import { BookReaction, ChapterReaction } from "./Reaction";
 import { Tag } from "./Tag";
+@ObjectType()
+export class _Count {
+  @Field(() => Number)
+  chapters?: number
+}
+
 
 @ObjectType()
 export class User {
@@ -28,6 +34,9 @@ export class User {
 
   @Field()
   numberOfFollowers: number;
+
+  @Field(() => _Count)
+  _count?: _Count | null;
 
   @Field(() => [Book])
   books?: Book[];

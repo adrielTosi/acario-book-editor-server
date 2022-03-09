@@ -128,12 +128,9 @@ export class UserResolver {
       where: { id: ctx.req.session.userId },
       include: {
         following: true,
-        books: true,
-        bookReactions: true,
         chapterReactions: true,
         comments: true,
         followers: true,
-        tags: true,
         chapters: true,
       },
     });
@@ -164,10 +161,10 @@ export class UserResolver {
       include: {
         following: true,
         followers: true,
-        books: {
-          include: { chapters: true, tags: true },
-        },
-        chapters: { include: { book: true, tags: true } },
+        chapters: { take: 10 },
+        _count: {
+          select: { chapters: true }
+        }
       },
     });
     if (!user) {
@@ -176,4 +173,21 @@ export class UserResolver {
 
     return user;
   }
+
+  // /**
+  //  * @UPDATE_PROFILE
+  //  */
+  //  @Query(() => User)
+  //  @UseMiddleware(isLogged)
+  //  async updateProfile(@Arg("username") username: string, @Ctx() ctx: Context): Promise<User> {
+  //   const currentUser = await ctx.prisma.user.findUnique({
+  //     where: { id: ctx.req.session.userId },
+  //   });
+
+  //   if (!currentUser) {
+  //     throw new AuthenticationError("Please login.");
+  //   }
+
+
+  //  }
 }

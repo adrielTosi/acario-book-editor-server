@@ -8,6 +8,7 @@ datasource db {
 
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["selectRelationCount"]
 }
 
 generator dbml {
@@ -56,6 +57,7 @@ model Chapter {
   id            String            @id @default(cuid())
   title         String
   text          String
+  description   String            @default("") @db.VarChar(400)
   chapterNumber Int               @default(-1)
   book          Book?             @relation(fields: [bookId], references: [id])
   bookId        String?

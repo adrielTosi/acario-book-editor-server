@@ -44,6 +44,7 @@ Table Chapter {
   id String [pk]
   title String [not null]
   text String [not null]
+  description String [not null, default: '']
   chapterNumber Int [not null, default: -1]
   book Book
   bookId String

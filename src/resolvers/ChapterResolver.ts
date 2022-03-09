@@ -28,6 +28,9 @@ class InputCreateChapter {
   @Field()
   text: string;
 
+  @Field()
+  description: string;
+
   @Field(() => [InputTag], { nullable: true })
   tags?: InputTag[];
 }
@@ -136,6 +139,7 @@ export class ChapterResolver {
         authorId: author.id,
         bookId: book ? book.id : undefined,
         chapterNumber: book ? totalNumberOfChapters! + 1 : undefined,
+        description: data.description,
         tags: data.tags
           ? {
               createMany: {
