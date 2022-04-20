@@ -27,7 +27,9 @@ declare module "express-session" {
   }
 }
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  log: ["query"],
+});
 
 const main = async () => {
   dotenv.config();
@@ -49,7 +51,8 @@ const main = async () => {
         sameSite: "lax",
         secure: process.env.NODE_ENV === "production",
         // COULD HAVE PROBLEM WITH FORWARDING COOCKIES
-        domain: process.env.NODE_ENV === "production" ? ".scrivono.xyz" : undefined,
+        domain:
+          process.env.NODE_ENV === "production" ? ".scrivono.xyz" : undefined,
       },
       resave: false,
       saveUninitialized: false,

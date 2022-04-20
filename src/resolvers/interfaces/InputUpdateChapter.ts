@@ -2,11 +2,8 @@ import { Field, InputType } from "type-graphql";
 
 @InputType()
 class InputUpdateChapter {
-  @Field()
-  type: "update_title" | "update_text";
-
-  @Field()
-  bookId: string;
+  @Field({ nullable: true })
+  bookId?: string;
 
   @Field()
   chapterId: string;
@@ -16,16 +13,9 @@ class InputUpdateChapter {
 
   @Field({ nullable: true })
   text?: string;
+
+  @Field({ nullable: true })
+  description?: string;
 }
-
-type TUpdateTitle = {
-  title: string;
-};
-
-type TUpdateText = {
-  text: string;
-};
-
-export type TUpdateChapterData = TUpdateTitle | TUpdateText;
 
 export default InputUpdateChapter;
