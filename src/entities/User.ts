@@ -8,9 +8,8 @@ import { Tag } from "./Tag";
 @ObjectType()
 export class _Count {
   @Field(() => Number)
-  chapters?: number
+  chapters?: number;
 }
-
 
 @ObjectType()
 export class User {
@@ -28,6 +27,15 @@ export class User {
 
   @Field()
   password: string;
+
+  @Field()
+  avatarType: string;
+
+  @Field()
+  avatarSeed: string;
+
+  @Field()
+  bio: string;
 
   @Field()
   numberOfFollowing: number;

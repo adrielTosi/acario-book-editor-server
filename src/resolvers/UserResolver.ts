@@ -4,7 +4,16 @@ import v from "validator";
 
 import { User } from "../entities/User";
 import { Context } from "../types";
-import { Arg, Ctx, Field, InputType, Mutation, Query, Resolver, UseMiddleware } from "type-graphql";
+import {
+  Arg,
+  Ctx,
+  Field,
+  InputType,
+  Mutation,
+  Query,
+  Resolver,
+  UseMiddleware,
+} from "type-graphql";
 import isLogged from "../middleware/isLogged";
 
 @InputType({ description: "Data for creating new user" })
@@ -144,27 +153,40 @@ export class UserResolver {
 
   /**
    * @GET_USER
+   * TODO: ADD PAGINATION
    */
   @Query(() => User)
-  @UseMiddleware(isLogged)
-  async getUser(@Arg("username") username: string, @Ctx() ctx: Context): Promise<User> {
-    const currentUser = await ctx.prisma.user.findUnique({
-      where: { id: ctx.req.session.userId },
-    });
+  // @UseMiddleware(isLogged)
+  async getUser(
+    @Arg("username") username: string,
+    @Ctx() ctx: Context
+  ): Promise<User> {
+    // const currentUser = await ctx.prisma.user.findUnique({
+    //   where: { id: ctx.req.session.userId },
+    // });
 
-    if (!currentUser) {
-      throw new AuthenticationError("Please login.");
-    }
+    // if (!currentUser) {
+    //   throw new AuthenticationError("Please login.");
+    // }
 
     const user = await ctx.prisma.user.findUnique({
       where: { username },
       include: {
         following: true,
         followers: true,
-        chapters: { take: 10 },
+        chapters: {
+          take: 10,
+          ...(ctx.req.session.userId && {
+            include: {
+              reactions: {
+                where: { authorId: ctx.req.session.userId },
+              },
+            },
+          }),
+        },
         _count: {
-          select: { chapters: true }
-        }
+          select: { chapters: true },
+        },
       },
     });
     if (!user) {
@@ -187,7 +209,6 @@ export class UserResolver {
   //   if (!currentUser) {
   //     throw new AuthenticationError("Please login.");
   //   }
-
 
   //  }
 }

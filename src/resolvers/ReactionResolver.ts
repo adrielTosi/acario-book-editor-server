@@ -1,7 +1,19 @@
 import isLogged from "../middleware/isLogged";
-import { Arg, Ctx, Field, Mutation, ObjectType, Resolver, UseMiddleware } from "type-graphql";
+import {
+  Arg,
+  Ctx,
+  Field,
+  Mutation,
+  ObjectType,
+  Resolver,
+  UseMiddleware,
+} from "type-graphql";
 import { Context } from "../types";
-import { ApolloError, AuthenticationError, UserInputError } from "apollo-server-express";
+import {
+  ApolloError,
+  AuthenticationError,
+  UserInputError,
+} from "apollo-server-express";
 import { Book } from "../entities/Book";
 import { Chapter } from "../entities/Chapter";
 
@@ -64,7 +76,10 @@ export class ReactionResolver {
           data: { likes: { increment: 1 } },
         });
 
-        const [_, updatedBook] = await ctx.prisma.$transaction([createReaction, updateBook]);
+        const [_, updatedBook] = await ctx.prisma.$transaction([
+          createReaction,
+          updateBook,
+        ]);
         if (!updatedBook) {
           throw new ApolloError("Something went wrong, refresh and try again.");
         }
@@ -85,7 +100,10 @@ export class ReactionResolver {
           data: { likes: { decrement: 1 } },
         });
 
-        const [_, updatedBook] = await ctx.prisma.$transaction([deleteReaction, updateBook]);
+        const [_, updatedBook] = await ctx.prisma.$transaction([
+          deleteReaction,
+          updateBook,
+        ]);
         if (!updatedBook) {
           throw new ApolloError("Something went wrong, refresh and try again.");
         }
@@ -107,7 +125,10 @@ export class ReactionResolver {
           data: { likes: { increment: 1 }, dislikes: { decrement: 1 } },
         });
 
-        const [_, updatedBook] = await ctx.prisma.$transaction([updateReaction, updateBook]);
+        const [_, updatedBook] = await ctx.prisma.$transaction([
+          updateReaction,
+          updateBook,
+        ]);
         if (!updatedBook) {
           throw new ApolloError("Something went wrong, refresh and try again.");
         }
@@ -125,7 +146,10 @@ export class ReactionResolver {
           data: { dislikes: { increment: 1 } },
         });
 
-        const [_, updatedBook] = await ctx.prisma.$transaction([createReaction, updateBook]);
+        const [_, updatedBook] = await ctx.prisma.$transaction([
+          createReaction,
+          updateBook,
+        ]);
         if (!updatedBook) {
           throw new ApolloError("Something went wrong, refresh and try again.");
         }
@@ -146,7 +170,10 @@ export class ReactionResolver {
           data: { dislikes: { decrement: 1 } },
         });
 
-        const [_, updatedBook] = await ctx.prisma.$transaction([deleteReaction, updateBook]);
+        const [_, updatedBook] = await ctx.prisma.$transaction([
+          deleteReaction,
+          updateBook,
+        ]);
         if (!updatedBook) {
           throw new ApolloError("Something went wrong, refresh and try again.");
         }
@@ -168,7 +195,10 @@ export class ReactionResolver {
           data: { likes: { decrement: 1 }, dislikes: { increment: 1 } },
         });
 
-        const [_, updatedBook] = await ctx.prisma.$transaction([updateReaction, updatebook]);
+        const [_, updatedBook] = await ctx.prisma.$transaction([
+          updateReaction,
+          updatebook,
+        ]);
         if (!updatedBook) {
           throw new ApolloError("Something went wrong, refresh and try again.");
         }
@@ -202,7 +232,7 @@ export class ReactionResolver {
       where: { id: chapterId },
     });
     if (!chapter) {
-      throw new UserInputError("Book doesn't exist");
+      throw new UserInputError("Story doesn't exist");
     }
 
     const alreadyVoted = await ctx.prisma.chapterReaction.findUnique({
@@ -218,11 +248,21 @@ export class ReactionResolver {
           data: { authorId: author.id, value: 1, chapterId: chapter.id },
         });
         const updateChapter = ctx.prisma.chapter.update({
+          ...(ctx.req.session.userId && {
+            include: {
+              reactions: {
+                where: { authorId: ctx.req.session.userId },
+              },
+            },
+          }),
           where: { id: chapter.id },
           data: { likes: { increment: 1 } },
         });
 
-        const [_, updatedChapter] = await ctx.prisma.$transaction([createReaction, updateChapter]);
+        const [_, updatedChapter] = await ctx.prisma.$transaction([
+          createReaction,
+          updateChapter,
+        ]);
         if (!updatedChapter) {
           throw new ApolloError("Something went wrong, refresh and try again.");
         }
@@ -239,11 +279,21 @@ export class ReactionResolver {
           },
         });
         const updateChapter = ctx.prisma.chapter.update({
+          ...(ctx.req.session.userId && {
+            include: {
+              reactions: {
+                where: { authorId: ctx.req.session.userId },
+              },
+            },
+          }),
           where: { id: chapter.id },
           data: { likes: { decrement: 1 } },
         });
 
-        const [_, updatedChapter] = await ctx.prisma.$transaction([deleteReaction, updateChapter]);
+        const [_, updatedChapter] = await ctx.prisma.$transaction([
+          deleteReaction,
+          updateChapter,
+        ]);
         if (!updatedChapter) {
           throw new ApolloError("Something went wrong, refresh and try again.");
         }
@@ -261,11 +311,21 @@ export class ReactionResolver {
           data: { value: 1 },
         });
         const updateChapter = ctx.prisma.chapter.update({
+          ...(ctx.req.session.userId && {
+            include: {
+              reactions: {
+                where: { authorId: ctx.req.session.userId },
+              },
+            },
+          }),
           where: { id: chapter.id },
           data: { likes: { increment: 1 }, dislikes: { decrement: 1 } },
         });
 
-        const [_, updatedChapter] = await ctx.prisma.$transaction([updateReaction, updateChapter]);
+        const [_, updatedChapter] = await ctx.prisma.$transaction([
+          updateReaction,
+          updateChapter,
+        ]);
         if (!updatedChapter) {
           throw new ApolloError("Something went wrong, refresh and try again.");
         }
@@ -279,11 +339,21 @@ export class ReactionResolver {
           data: { authorId: author.id, value: -1, chapterId: chapter.id },
         });
         const updateChapter = ctx.prisma.chapter.update({
+          ...(ctx.req.session.userId && {
+            include: {
+              reactions: {
+                where: { authorId: ctx.req.session.userId },
+              },
+            },
+          }),
           where: { id: chapter.id },
           data: { dislikes: { increment: 1 } },
         });
 
-        const [_, updatedChapter] = await ctx.prisma.$transaction([createReaction, updateChapter]);
+        const [_, updatedChapter] = await ctx.prisma.$transaction([
+          createReaction,
+          updateChapter,
+        ]);
         if (!updatedChapter) {
           throw new ApolloError("Something went wrong, refresh and try again.");
         }
@@ -300,11 +370,21 @@ export class ReactionResolver {
           },
         });
         const updateChapter = ctx.prisma.chapter.update({
+          ...(ctx.req.session.userId && {
+            include: {
+              reactions: {
+                where: { authorId: ctx.req.session.userId },
+              },
+            },
+          }),
           where: { id: chapter.id },
           data: { dislikes: { decrement: 1 } },
         });
 
-        const [_, updatedChapter] = await ctx.prisma.$transaction([deleteReaction, updateChapter]);
+        const [_, updatedChapter] = await ctx.prisma.$transaction([
+          deleteReaction,
+          updateChapter,
+        ]);
         if (!updatedChapter) {
           throw new ApolloError("Something went wrong, refresh and try again.");
         }
@@ -322,11 +402,21 @@ export class ReactionResolver {
           data: { value: -1 },
         });
         const updateChapter = ctx.prisma.chapter.update({
+          ...(ctx.req.session.userId && {
+            include: {
+              reactions: {
+                where: { authorId: ctx.req.session.userId },
+              },
+            },
+          }),
           where: { id: chapter.id },
           data: { likes: { decrement: 1 }, dislikes: { increment: 1 } },
         });
 
-        const [_, updatedChapter] = await ctx.prisma.$transaction([updateReaction, updateChapter]);
+        const [_, updatedChapter] = await ctx.prisma.$transaction([
+          updateReaction,
+          updateChapter,
+        ]);
         if (!updatedChapter) {
           throw new ApolloError("Something went wrong, refresh and try again.");
         }
