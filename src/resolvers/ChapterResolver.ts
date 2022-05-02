@@ -235,7 +235,11 @@ export class ChapterResolver {
       where: { id: chapterId },
       include: {
         tags: true,
-        comments: true,
+        comments: {
+          include: {
+            author: true,
+          },
+        },
         book: true,
         author: true,
         ...(ctx.req.session.userId && {
@@ -419,7 +423,27 @@ export class ChapterResolver {
       throw new AuthenticationError("This is not yours.");
     }
 
-    await ctx.prisma.chapter.delete({ where: { id: chapter.id } });
+    const deleteReactions = ctx.prisma.chapterReaction.deleteMany({
+      where: { chapterId: chapter.id },
+    });
+    const deleteComments = ctx.prisma.comment.deleteMany({
+      where: { chapterId: chapter.id },
+    });
+    const deleteChapter = ctx.prisma.chapter.delete({
+      where: { id: chapter.id },
+    });
+
+    try {
+      await ctx.prisma.$transaction([
+        deleteReactions,
+        deleteComments,
+        deleteChapter,
+      ]);
+    } catch {
+      throw new ApolloError(
+        "Something went wrong, please refresh and try again."
+      );
+    }
     return chapter;
   }
 }

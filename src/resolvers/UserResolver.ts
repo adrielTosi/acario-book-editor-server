@@ -176,13 +176,18 @@ export class UserResolver {
         followers: true,
         chapters: {
           take: 10,
-          ...(ctx.req.session.userId && {
-            include: {
+          include: {
+            comments: {
+              include: {
+                author: true,
+              },
+            },
+            ...(ctx.req.session.userId && {
               reactions: {
                 where: { authorId: ctx.req.session.userId },
               },
-            },
-          }),
+            }),
+          },
         },
         _count: {
           select: { chapters: true },

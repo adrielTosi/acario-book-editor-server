@@ -248,13 +248,18 @@ export class ReactionResolver {
           data: { authorId: author.id, value: 1, chapterId: chapter.id },
         });
         const updateChapter = ctx.prisma.chapter.update({
-          ...(ctx.req.session.userId && {
-            include: {
+          include: {
+            ...(ctx.req.session.userId && {
               reactions: {
                 where: { authorId: ctx.req.session.userId },
               },
+            }),
+            comments: {
+              include: {
+                author: true,
+              },
             },
-          }),
+          },
           where: { id: chapter.id },
           data: { likes: { increment: 1 } },
         });
@@ -279,13 +284,18 @@ export class ReactionResolver {
           },
         });
         const updateChapter = ctx.prisma.chapter.update({
-          ...(ctx.req.session.userId && {
-            include: {
+          include: {
+            ...(ctx.req.session.userId && {
               reactions: {
                 where: { authorId: ctx.req.session.userId },
               },
+            }),
+            comments: {
+              include: {
+                author: true,
+              },
             },
-          }),
+          },
           where: { id: chapter.id },
           data: { likes: { decrement: 1 } },
         });
@@ -311,13 +321,18 @@ export class ReactionResolver {
           data: { value: 1 },
         });
         const updateChapter = ctx.prisma.chapter.update({
-          ...(ctx.req.session.userId && {
-            include: {
+          include: {
+            ...(ctx.req.session.userId && {
               reactions: {
                 where: { authorId: ctx.req.session.userId },
               },
+            }),
+            comments: {
+              include: {
+                author: true,
+              },
             },
-          }),
+          },
           where: { id: chapter.id },
           data: { likes: { increment: 1 }, dislikes: { decrement: 1 } },
         });
@@ -339,13 +354,18 @@ export class ReactionResolver {
           data: { authorId: author.id, value: -1, chapterId: chapter.id },
         });
         const updateChapter = ctx.prisma.chapter.update({
-          ...(ctx.req.session.userId && {
-            include: {
+          include: {
+            ...(ctx.req.session.userId && {
               reactions: {
                 where: { authorId: ctx.req.session.userId },
               },
+            }),
+            comments: {
+              include: {
+                author: true,
+              },
             },
-          }),
+          },
           where: { id: chapter.id },
           data: { dislikes: { increment: 1 } },
         });
@@ -370,13 +390,18 @@ export class ReactionResolver {
           },
         });
         const updateChapter = ctx.prisma.chapter.update({
-          ...(ctx.req.session.userId && {
-            include: {
+          include: {
+            ...(ctx.req.session.userId && {
               reactions: {
                 where: { authorId: ctx.req.session.userId },
               },
+            }),
+            comments: {
+              include: {
+                author: true,
+              },
             },
-          }),
+          },
           where: { id: chapter.id },
           data: { dislikes: { decrement: 1 } },
         });
@@ -402,13 +427,18 @@ export class ReactionResolver {
           data: { value: -1 },
         });
         const updateChapter = ctx.prisma.chapter.update({
-          ...(ctx.req.session.userId && {
-            include: {
+          include: {
+            ...(ctx.req.session.userId && {
               reactions: {
                 where: { authorId: ctx.req.session.userId },
               },
+            }),
+            comments: {
+              include: {
+                author: true,
+              },
             },
-          }),
+          },
           where: { id: chapter.id },
           data: { likes: { decrement: 1 }, dislikes: { increment: 1 } },
         });

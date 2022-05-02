@@ -61,7 +61,7 @@ export class User {
   @Field(() => [Follow])
   followers?: Follow[];
 
-  @Field(() => [Comment])
+  @Field(() => [Comment], { nullable: true })
   comments?: Comment[];
 
   @Field(() => [BookReaction])

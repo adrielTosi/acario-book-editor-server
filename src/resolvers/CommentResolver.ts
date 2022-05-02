@@ -74,6 +74,9 @@ export class CommentResolver {
           authorId: author.id,
           chapterId: chapter.id,
         },
+        include: {
+          author: true,
+        },
       });
       return comment;
     } else {
