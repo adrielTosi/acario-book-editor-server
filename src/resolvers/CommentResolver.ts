@@ -115,6 +115,9 @@ export class CommentResolver {
       data: {
         text,
       },
+      include: {
+        author: true,
+      },
     });
 
     return updatedComment;
@@ -123,12 +126,12 @@ export class CommentResolver {
   /**
    * @DELETE_COMMENT
    */
-  @Mutation(() => Boolean)
+  @Mutation(() => Comment)
   @UseMiddleware(isLogged)
   async deleteComment(
     @Arg("id") id: string,
     @Ctx() ctx: Context
-  ): Promise<boolean> {
+  ): Promise<Comment> {
     const author = await ctx.prisma.user.findUnique({
       where: { id: ctx.req.session.userId },
     });
@@ -145,7 +148,12 @@ export class CommentResolver {
       throw new AuthenticationError("Comment is not yours");
     }
 
-    await ctx.prisma.comment.delete({ where: { id: foundComment.id } });
-    return true;
+    const comment = await ctx.prisma.comment.delete({
+      where: { id: foundComment.id },
+      include: {
+        author: true,
+      },
+    });
+    return comment;
   }
 }
