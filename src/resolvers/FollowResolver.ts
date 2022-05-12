@@ -26,9 +26,9 @@ export class FollowResolver {
   @Mutation(() => Follow)
   @UseMiddleware(isLogged)
   async followUser(
-    @Arg("data") data: InputFollow,
+    @Arg("id") id: string,
     @Ctx() ctx: Context
-  ): Promise<InputFollow> {
+  ): Promise<Follow> {
     const follower = await ctx.prisma.user.findUnique({
       where: { id: ctx.req.session.userId },
     });
@@ -36,17 +36,17 @@ export class FollowResolver {
     if (!follower) {
       throw new AuthenticationError("Invalid user.");
     }
-    
+
     const leader = await ctx.prisma.user.findUnique({
-      where: { id: data.followId },
+      where: { id },
     });
-    
+
     if (!leader) {
       throw new UserInputError(
         "The person you are trying to follow does not exist or has been deleted."
       );
     }
-    
+
     if (leader.id === follower.id) {
       throw new UserInputError("You trying to follow yourself? That's low...");
     }
@@ -63,9 +63,7 @@ export class FollowResolver {
       ctx.prisma.follow.create({
         data: { leaderId: leader.id, followId: follower.id },
       }),
-      ctx.prisma.user.update({where: {id: leader.id}, data: {numberOfFollowers: {increment: 1}} }),
-      ctx.prisma.user.update({where: { id: follower.id }, data: {numberOfFollowing: {increment: 1}}})
-    ])
+    ]);
 
     return followObject;
   }
@@ -73,12 +71,12 @@ export class FollowResolver {
   /**
    * @UNFOLLOW_USER
    */
-  @Mutation(() => Boolean)
+  @Mutation(() => Follow)
   @UseMiddleware(isLogged)
   async unfollowUser(
-    @Arg("data") data: InputFollow,
+    @Arg("id") id: string,
     @Ctx() ctx: Context
-  ): Promise<boolean> {
+  ): Promise<Follow> {
     const user = await ctx.prisma.user.findUnique({
       where: { id: ctx.req.session.userId },
     });
@@ -88,7 +86,7 @@ export class FollowResolver {
     }
 
     const unfollow = await ctx.prisma.user.findUnique({
-      where: { id: data.followId },
+      where: { id },
     });
 
     if (!unfollow) {
@@ -111,16 +109,14 @@ export class FollowResolver {
       throw new UserInputError("You don't follow this person.");
     }
 
-    await ctx.prisma.$transaction([
+    const [followObject] = await ctx.prisma.$transaction([
       ctx.prisma.follow.delete({
         where: {
           leaderId_followId: { leaderId: unfollow.id, followId: user.id },
         },
       }),
-      ctx.prisma.user.update({where: {id: unfollow.id}, data: {numberOfFollowers: {decrement: 1}} }),
-      ctx.prisma.user.update({where: { id: user.id }, data: {numberOfFollowing: {decrement: 1}}})
-    ])
+    ]);
 
-    return true;
+    return followObject;
   }
 }

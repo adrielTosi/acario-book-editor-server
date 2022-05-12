@@ -1,5 +1,9 @@
 import bcrypt from "bcrypt";
-import { UserInputError, AuthenticationError } from "apollo-server-express";
+import {
+  UserInputError,
+  AuthenticationError,
+  ApolloError,
+} from "apollo-server-express";
 import v from "validator";
 
 import { User } from "../entities/User";
@@ -15,6 +19,7 @@ import {
   UseMiddleware,
 } from "type-graphql";
 import isLogged from "../middleware/isLogged";
+import InputUpdateProfile from "./interfaces/InputUpdateProfile";
 
 @InputType({ description: "Data for creating new user" })
 class InputCreateUser {
@@ -173,10 +178,15 @@ export class UserResolver {
       where: { username },
       include: {
         following: true,
-        followers: true,
+        followers: {
+          where: {
+            followId: ctx.req.session?.userId,
+          },
+        },
         chapters: {
           take: 10,
           include: {
+            author: true,
             comments: {
               include: {
                 author: true,
@@ -190,7 +200,7 @@ export class UserResolver {
           },
         },
         _count: {
-          select: { chapters: true },
+          select: { chapters: true, followers: true, following: true },
         },
       },
     });
@@ -201,19 +211,63 @@ export class UserResolver {
     return user;
   }
 
-  // /**
-  //  * @UPDATE_PROFILE
-  //  */
-  //  @Query(() => User)
-  //  @UseMiddleware(isLogged)
-  //  async updateProfile(@Arg("username") username: string, @Ctx() ctx: Context): Promise<User> {
-  //   const currentUser = await ctx.prisma.user.findUnique({
-  //     where: { id: ctx.req.session.userId },
-  //   });
+  /**
+   * @UPDATE_PROFILE
+   */
+  @Mutation(() => User)
+  @UseMiddleware(isLogged)
+  async updateProfile(
+    @Arg("data") data: InputUpdateProfile,
+    @Ctx() ctx: Context
+  ): Promise<User> {
+    const currentUser = await ctx.prisma.user.findUnique({
+      where: { id: ctx.req.session.userId },
+    });
 
-  //   if (!currentUser) {
-  //     throw new AuthenticationError("Please login.");
-  //   }
+    if (!currentUser) {
+      throw new AuthenticationError("Please login.");
+    }
 
-  //  }
+    try {
+      const updatedUser = await ctx.prisma.user.update({
+        where: { id: currentUser.id },
+        data: {
+          name: data.name,
+          avatarSeed: data.avatarSeed,
+          avatarType: data.avatarType,
+          bio: data.bio,
+        },
+        include: {
+          following: true,
+          followers: {
+            where: {
+              followId: ctx.req.session?.userId,
+            },
+          },
+          chapters: {
+            take: 10,
+            include: {
+              author: true,
+              comments: {
+                include: {
+                  author: true,
+                },
+              },
+              ...(ctx.req.session.userId && {
+                reactions: {
+                  where: { authorId: ctx.req.session.userId },
+                },
+              }),
+            },
+          },
+          _count: {
+            select: { chapters: true, followers: true, following: true },
+          },
+        },
+      });
+      return updatedUser;
+    } catch (err) {
+      throw new ApolloError(err.message);
+    }
+  }
 }

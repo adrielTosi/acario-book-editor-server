@@ -77,7 +77,7 @@ export class ChapterResolver {
     const chapters = await ctx.prisma.chapter.findMany({
       take,
       where: {
-        authorId: { in: user.following.map((follow) => follow.followId) },
+        authorId: { in: user.following.map((follow) => follow.leaderId) },
         createdAt: cursor ? { lt: cursorDate } : undefined,
       },
       orderBy: {
@@ -92,7 +92,11 @@ export class ChapterResolver {
           },
         }),
         book: true,
-        comments: true,
+        comments: {
+          include: {
+            author: true,
+          },
+        },
       },
     });
 
@@ -164,6 +168,7 @@ export class ChapterResolver {
       },
       include: {
         tags: !!data.tags,
+        author: true,
       },
     });
 

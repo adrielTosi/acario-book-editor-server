@@ -9,6 +9,12 @@ import { Tag } from "./Tag";
 export class _Count {
   @Field(() => Number)
   chapters?: number;
+
+  @Field(() => Number)
+  followers?: number;
+
+  @Field(() => Number)
+  following?: number;
 }
 
 @ObjectType()
@@ -36,12 +42,6 @@ export class User {
 
   @Field()
   bio: string;
-
-  @Field()
-  numberOfFollowing: number;
-
-  @Field()
-  numberOfFollowers: number;
 
   @Field(() => _Count)
   _count?: _Count | null;
