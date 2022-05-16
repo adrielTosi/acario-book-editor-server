@@ -32,6 +32,7 @@ model User {
   comments         Comment[]
   bookReactions    BookReaction[]
   chapterReactions ChapterReaction[]
+  ReadLater        ReadLater[]
   createdAt        DateTime          @default(now())
 }
 
@@ -64,6 +65,7 @@ model Chapter {
   tags          Tag[]
   comments      Comment[]
   reactions     ChapterReaction[]
+  ReadLater     ReadLater[]
   likes         Int               @default(0)
   dislikes      Int               @default(0)
   createdAt     DateTime          @default(now())
@@ -121,6 +123,16 @@ model ChapterReaction {
   value     Int
   chapter   Chapter @relation(fields: [chapterId], references: [id])
   chapterId String
+
+  @@id([authorId, chapterId])
+}
+
+model ReadLater {
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  String
+  chapter   Chapter  @relation(fields: [chapterId], references: [id])
+  chapterId String
+  createdAt DateTime @default(now())
 
   @@id([authorId, chapterId])
 }

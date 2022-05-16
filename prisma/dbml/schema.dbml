@@ -8,7 +8,7 @@ Table User {
   username String [unique, not null]
   name String [not null]
   password String [not null]
-  bio String [not null, default: '']
+  bio String [not null, default: 'Hello, check out my stories!']
   avatarType String [not null, default: 'croodles']
   avatarSeed String [not null, default: 'scrivono']
   books Book [not null]
@@ -19,6 +19,7 @@ Table User {
   comments Comment [not null]
   bookReactions BookReaction [not null]
   chapterReactions ChapterReaction [not null]
+  ReadLater ReadLater [not null]
   createdAt DateTime [default: `now()`, not null]
 }
 
@@ -51,6 +52,7 @@ Table Chapter {
   tags Tag [not null]
   comments Comment [not null]
   reactions ChapterReaction [not null]
+  ReadLater ReadLater [not null]
   likes Int [not null, default: 0]
   dislikes Int [not null, default: 0]
   createdAt DateTime [default: `now()`, not null]
@@ -118,6 +120,18 @@ Table ChapterReaction {
   }
 }
 
+Table ReadLater {
+  author User [not null]
+  authorId String [not null]
+  chapter Chapter [not null]
+  chapterId String [not null]
+  createdAt DateTime [default: `now()`, not null]
+
+  indexes {
+    (authorId, chapterId) [pk]
+  }
+}
+
 Ref: Book.authorId > User.id
 
 Ref: Chapter.bookId > Book.id
@@ -147,3 +161,7 @@ Ref: BookReaction.bookId > Book.id
 Ref: ChapterReaction.authorId > User.id
 
 Ref: ChapterReaction.chapterId > Chapter.id
+
+Ref: ReadLater.authorId > User.id
+
+Ref: ReadLater.chapterId > Chapter.id
