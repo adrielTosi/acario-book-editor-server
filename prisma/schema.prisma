@@ -57,6 +57,7 @@ model Chapter {
   title         String
   text          String
   description   String            @default("") @db.VarChar(400)
+  status        String            @default("published")
   chapterNumber Int               @default(-1)
   book          Book?             @relation(fields: [bookId], references: [id])
   bookId        String?

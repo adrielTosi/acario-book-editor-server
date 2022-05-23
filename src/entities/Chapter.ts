@@ -20,6 +20,9 @@ export class Chapter {
   description: string;
 
   @Field()
+  status: "draft" | "published" | string;
+
+  @Field()
   chapterNumber: number;
 
   @Field(() => Int)

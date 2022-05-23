@@ -12,6 +12,7 @@ import {
   Mutation,
   ObjectType,
   Query,
+  registerEnumType,
   Resolver,
   UseMiddleware,
 } from "type-graphql";
@@ -20,6 +21,7 @@ import isLogged from "../middleware/isLogged";
 import { Context } from "../types";
 import InputTag from "./interfaces/InputTags";
 import InputUpdateChapter from "./interfaces/InputUpdateChapter";
+import { StatusEnum } from "./interfaces/Status.enum";
 
 @InputType()
 class InputCreateChapter {
@@ -28,6 +30,9 @@ class InputCreateChapter {
 
   @Field(() => String, { nullable: true })
   bookId?: string;
+
+  @Field(() => String)
+  status: string;
 
   @Field()
   text: string;
@@ -38,6 +43,11 @@ class InputCreateChapter {
   @Field(() => [InputTag], { nullable: true })
   tags?: InputTag[];
 }
+
+registerEnumType(StatusEnum, {
+  name: "ChapterStatus",
+  description: "The status of the Tale",
+});
 
 @ObjectType()
 export class PaginatedTimelineChapters {
@@ -128,6 +138,7 @@ export class ChapterResolver {
       throw new AuthenticationError("Invalid user.");
     }
 
+    // for when chapters can be put into books
     let book:
       | (Book & {
           chapters: Chapter[];
@@ -154,6 +165,7 @@ export class ChapterResolver {
         bookId: book ? book.id : undefined,
         chapterNumber: book ? totalNumberOfChapters! + 1 : undefined,
         description: data.description,
+        status: data.status,
         tags: data.tags
           ? {
               createMany: {
@@ -391,6 +403,7 @@ export class ChapterResolver {
     }
     return updatedChapter;
   }
+
   /**
    * @DELETE_CHAPTER
    * TODO: should I return Chapter here after deletion?
@@ -450,5 +463,50 @@ export class ChapterResolver {
       );
     }
     return chapter;
+  }
+
+  /**
+   * @CHANGE_STATUS
+   */
+  @Mutation(() => Chapter)
+  @UseMiddleware(isLogged)
+  async changeStatus(
+    @Arg("newStatus", () => StatusEnum) newStatus: StatusEnum,
+    @Arg("id") id: string,
+    @Ctx() ctx: Context
+  ): Promise<Chapter> {
+    const user = await ctx.prisma.user.findUnique({
+      where: { id: ctx.req.session.userId },
+    });
+
+    if (!user) {
+      throw new AuthenticationError("Please, login!");
+    }
+
+    const chapter = await ctx.prisma.chapter.findUnique({ where: { id } });
+
+    if (!chapter) {
+      throw new ApolloError("Tale does not exist or has been deleted!");
+    }
+
+    if (chapter.authorId !== user.id) {
+      throw new AuthenticationError("This tale is not yours!");
+    }
+
+    if (chapter.status === newStatus.toString()) {
+      throw new UserInputError("The tale is already with the new status!");
+    }
+
+    try {
+      const updatedTale = await ctx.prisma.chapter.update({
+        where: { id },
+        data: {
+          status: newStatus.toString(),
+        },
+      });
+      return updatedTale;
+    } catch (err) {
+      throw new ApolloError(err.message);
+    }
   }
 }
