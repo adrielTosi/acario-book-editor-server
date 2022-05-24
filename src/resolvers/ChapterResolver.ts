@@ -50,6 +50,15 @@ registerEnumType(StatusEnum, {
 });
 
 @ObjectType()
+export class PaginatedDrafts {
+  @Field(() => [Chapter])
+  drafts: Chapter[];
+
+  @Field()
+  hasMore?: boolean;
+}
+
+@ObjectType()
 export class PaginatedTimelineChapters {
   @Field(() => [Chapter])
   chapters: Chapter[];
@@ -307,6 +316,47 @@ export class ChapterResolver {
   }
 
   /**
+   * @GET_DRAFTS
+   */
+  @Query(() => PaginatedDrafts)
+  @UseMiddleware(isLogged)
+  async getDrafts(
+    @Ctx() ctx: Context,
+    @Arg("take") take: number,
+    @Arg("offset") offset: number
+  ): Promise<PaginatedDrafts> {
+    const author = await ctx.prisma.user.findUnique({
+      where: { id: ctx.req.session.userId },
+    });
+
+    if (!author) {
+      throw new AuthenticationError("Please login");
+    }
+
+    const chapters = await ctx.prisma.chapter.findMany({
+      take,
+      skip: offset,
+      where: { authorId: author.id, status: StatusEnum.Draft },
+      include: {
+        tags: true,
+        comments: { include: { author: true } },
+        book: true,
+        author: true,
+        ...(ctx.req.session.userId && {
+          reactions: {
+            where: { authorId: ctx.req.session.userId },
+          },
+        }),
+      },
+    });
+
+    let hasMore = true;
+    if (chapters.length < take) hasMore = false;
+
+    return { drafts: chapters, hasMore };
+  }
+
+  /**
    * @UPDATE_CHAPTER
    */
   @Mutation(() => Chapter)
@@ -350,6 +400,14 @@ export class ChapterResolver {
       data: updateData,
       include: {
         tags: true,
+        comments: { include: { author: true } },
+        book: true,
+        author: true,
+        ...(ctx.req.session.userId && {
+          reactions: {
+            where: { authorId: ctx.req.session.userId },
+          },
+        }),
       },
     });
 
@@ -488,6 +546,7 @@ export class ChapterResolver {
     if (!chapter) {
       throw new ApolloError("Tale does not exist or has been deleted!");
     }
+    console.log(newStatus, chapter.status);
 
     if (chapter.authorId !== user.id) {
       throw new AuthenticationError("This tale is not yours!");
@@ -502,6 +561,17 @@ export class ChapterResolver {
         where: { id },
         data: {
           status: newStatus.toString(),
+        },
+        include: {
+          tags: true,
+          comments: { include: { author: true } },
+          book: true,
+          author: true,
+          ...(ctx.req.session.userId && {
+            reactions: {
+              where: { authorId: ctx.req.session.userId },
+            },
+          }),
         },
       });
       return updatedTale;

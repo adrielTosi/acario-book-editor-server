@@ -20,6 +20,7 @@ import {
 } from "type-graphql";
 import isLogged from "../middleware/isLogged";
 import InputUpdateProfile from "./interfaces/InputUpdateProfile";
+import { StatusEnum } from "./interfaces/Status.enum";
 
 @InputType({ description: "Data for creating new user" })
 class InputCreateUser {
@@ -185,6 +186,7 @@ export class UserResolver {
         },
         chapters: {
           take: 10,
+          where: { status: StatusEnum.Published },
           include: {
             author: true,
             comments: {
