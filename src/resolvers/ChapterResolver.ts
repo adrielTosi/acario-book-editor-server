@@ -59,6 +59,15 @@ export class PaginatedDrafts {
 }
 
 @ObjectType()
+export class PaginatedChaptersFromUser {
+  @Field(() => [Chapter])
+  chapters: Chapter[];
+
+  @Field()
+  hasMore?: boolean;
+}
+
+@ObjectType()
 export class PaginatedTimelineChapters {
   @Field(() => [Chapter])
   chapters: Chapter[];
@@ -284,11 +293,13 @@ export class ChapterResolver {
   /**
    * @GET_CHAPTERS_FROM_USER
    */
-  @Query(() => [Chapter])
+  @Query(() => PaginatedChaptersFromUser)
   async getChaptersFromUser(
     @Arg("username") username: string,
+    @Arg("take") take: number,
+    @Arg("offset") offset: number,
     @Ctx() ctx: Context
-  ): Promise<Chapter[]> {
+  ): Promise<PaginatedChaptersFromUser> {
     const author = await ctx.prisma.user.findUnique({
       where: { username },
     });
@@ -298,7 +309,10 @@ export class ChapterResolver {
     }
 
     const chapters = await ctx.prisma.chapter.findMany({
-      where: { authorId: author.id },
+      take,
+      skip: offset,
+      where: { authorId: author.id, AND: { status: StatusEnum.Published } },
+      orderBy: { createdAt: "desc" },
       include: {
         tags: true,
         comments: { include: { author: true } },
@@ -312,7 +326,10 @@ export class ChapterResolver {
       },
     });
 
-    return chapters;
+    let hasMore = true;
+    if (chapters.length < take) hasMore = false;
+
+    return { chapters, hasMore };
   }
 
   /**

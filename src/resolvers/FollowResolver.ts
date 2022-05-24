@@ -48,7 +48,9 @@ export class FollowResolver {
     }
 
     if (leader.id === follower.id) {
-      throw new UserInputError("You trying to follow yourself? That's low...");
+      throw new UserInputError(
+        "HA! Got you! You can't follow yourself and your tried it anyway!"
+      );
     }
 
     const alreadyFollow = await ctx.prisma.follow.findUnique({

@@ -1,13 +1,9 @@
-import bcrypt from "bcrypt";
 import {
-  UserInputError,
-  AuthenticationError,
   ApolloError,
+  AuthenticationError,
+  UserInputError,
 } from "apollo-server-express";
-import v from "validator";
-
-import { User } from "../entities/User";
-import { Context } from "../types";
+import bcrypt from "bcrypt";
 import {
   Arg,
   Ctx,
@@ -18,9 +14,11 @@ import {
   Resolver,
   UseMiddleware,
 } from "type-graphql";
+import v from "validator";
+import { User } from "../entities/User";
 import isLogged from "../middleware/isLogged";
+import { Context } from "../types";
 import InputUpdateProfile from "./interfaces/InputUpdateProfile";
-import { StatusEnum } from "./interfaces/Status.enum";
 
 @InputType({ description: "Data for creating new user" })
 class InputCreateUser {
@@ -164,41 +162,21 @@ export class UserResolver {
   @Query(() => User)
   // @UseMiddleware(isLogged)
   async getUser(
-    @Arg("username") username: string,
-    @Ctx() ctx: Context
+    @Ctx() ctx: Context,
+    @Arg("username", { nullable: true }) username?: string,
+    @Arg("findFromUserId", { nullable: true }) findFromUserId?: boolean
   ): Promise<User> {
-    // const currentUser = await ctx.prisma.user.findUnique({
-    //   where: { id: ctx.req.session.userId },
-    // });
-
-    // if (!currentUser) {
-    //   throw new AuthenticationError("Please login.");
-    // }
+    const Where = findFromUserId
+      ? { id: ctx.req.session.userId }
+      : { username };
 
     const user = await ctx.prisma.user.findUnique({
-      where: { username },
+      where: Where,
       include: {
-        following: true,
+        // following: true,
         followers: {
           where: {
             followId: ctx.req.session?.userId,
-          },
-        },
-        chapters: {
-          take: 10,
-          where: { status: StatusEnum.Published },
-          include: {
-            author: true,
-            comments: {
-              include: {
-                author: true,
-              },
-            },
-            ...(ctx.req.session.userId && {
-              reactions: {
-                where: { authorId: ctx.req.session.userId },
-              },
-            }),
           },
         },
         _count: {
@@ -206,6 +184,7 @@ export class UserResolver {
         },
       },
     });
+
     if (!user) {
       throw new UserInputError("This user does not exist or has been deleted.");
     }
