@@ -1,4 +1,5 @@
 import { Field, InputType } from "type-graphql";
+import InputTag from "./InputTags";
 
 @InputType()
 class InputUpdateChapter {
@@ -16,6 +17,9 @@ class InputUpdateChapter {
 
   @Field({ nullable: true })
   description?: string;
+
+  @Field(() => [InputTag], { nullable: true })
+  tags?: InputTag[];
 }
 
 export default InputUpdateChapter;

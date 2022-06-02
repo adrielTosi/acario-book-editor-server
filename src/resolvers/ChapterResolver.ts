@@ -19,9 +19,16 @@ import {
 import { Chapter } from "../entities/Chapter";
 import isLogged from "../middleware/isLogged";
 import { Context } from "../types";
+import { getTagsData } from "../utils/getTagsData";
 import InputTag from "./interfaces/InputTags";
 import InputUpdateChapter from "./interfaces/InputUpdateChapter";
 import { StatusEnum } from "./interfaces/Status.enum";
+
+/**
+ * ====================================================================
+ *                          INPUTS AND OBJECTS
+ * ====================================================================
+ */
 
 @InputType()
 class InputCreateChapter {
@@ -76,11 +83,17 @@ export class PaginatedTimelineChapters {
   hasMore?: boolean;
 }
 
+/**
+ * ====================================================================
+ *                          RESOLVER
+ * ====================================================================
+ */
+
 @Resolver((_of) => Chapter)
 export class ChapterResolver {
-  /**
-   * @GET
+  /** --------------------------------------------------
    * @TIMELINE_BOOKS
+   * ---------------------------------------------------
    */
   @Query(() => PaginatedTimelineChapters)
   @UseMiddleware(isLogged)
@@ -140,108 +153,9 @@ export class ChapterResolver {
   }
 
   /**
-   * @CREATE_CHAPTER
-   */
-  @Mutation(() => Chapter)
-  @UseMiddleware(isLogged)
-  async createChapter(
-    @Arg("chapterData") data: InputCreateChapter,
-    @Ctx() ctx: Context
-  ): Promise<Chapter> {
-    const author = await ctx.prisma.user.findUnique({
-      where: { id: ctx.req.session.userId },
-    });
-
-    if (!author) {
-      throw new AuthenticationError("Invalid user.");
-    }
-
-    // for when chapters can be put into books
-    let book:
-      | (Book & {
-          chapters: Chapter[];
-        })
-      | null = null;
-    if (data.bookId) {
-      book = await ctx.prisma.book.findUnique({
-        where: { id: data.bookId },
-        include: { chapters: true },
-      });
-    }
-
-    if (book && book.authorId !== author.id) {
-      throw new AuthenticationError("Book is not yours.");
-    }
-
-    const totalNumberOfChapters = book?.chapters.length;
-
-    const chapter = await ctx.prisma.chapter.create({
-      data: {
-        title: data.title,
-        text: data.text,
-        authorId: author.id,
-        bookId: book ? book.id : undefined,
-        chapterNumber: book ? totalNumberOfChapters! + 1 : undefined,
-        description: data.description,
-        status: data.status,
-        tags: data.tags
-          ? {
-              createMany: {
-                data: data.tags.map((tag) => ({
-                  label: tag.label,
-                  value: tag.value,
-                  authorId: author.id,
-                })),
-              },
-            }
-          : undefined,
-      },
-      include: {
-        tags: !!data.tags,
-        author: true,
-      },
-    });
-
-    return chapter;
-  }
-
-  /**
-   * @GET_CHAPTERS_FROM_BOOK
-   */
-  @Query(() => [Chapter])
-  @UseMiddleware(isLogged)
-  async getChaptersFromBook(
-    @Arg("bookId") bookId: string,
-    @Ctx() ctx: Context
-  ): Promise<Chapter[]> {
-    const author = await ctx.prisma.user.findUnique({
-      where: { id: ctx.req.session.userId },
-    });
-
-    if (!author) {
-      throw new AuthenticationError("Invalid user.");
-    }
-    const book = await ctx.prisma.book.findUnique({ where: { id: bookId } });
-    if (!book) {
-      throw new UserInputError("Book doesn't exist or has been deleted.");
-    }
-    if (book.authorId !== author.id) {
-      throw new AuthenticationError("Book is not yours.");
-    }
-
-    const chapters = await ctx.prisma.chapter.findMany({
-      where: { bookId },
-      orderBy: { chapterNumber: "asc" },
-      include: {
-        tags: true,
-        comments: true,
-      },
-    });
-    return chapters;
-  }
-
-  /**
+   * ---------------------------------------------------
    * @GET_CHAPTER
+   * ---------------------------------------------------
    */
   @Query(() => Chapter)
   // @UseMiddleware(isLogged)
@@ -311,7 +225,7 @@ export class ChapterResolver {
     const chapters = await ctx.prisma.chapter.findMany({
       take,
       skip: offset,
-      where: { authorId: author.id, AND: { status: StatusEnum.Published } },
+      where: { authorId: author.id, AND: { status: StatusEnum.PUBLISHED } },
       orderBy: { createdAt: "desc" },
       include: {
         tags: true,
@@ -333,48 +247,73 @@ export class ChapterResolver {
   }
 
   /**
-   * @GET_DRAFTS
+   * ---------------------------------------------------
+   * @CREATE_CHAPTER
+   * ---------------------------------------------------
    */
-  @Query(() => PaginatedDrafts)
+  @Mutation(() => Chapter)
   @UseMiddleware(isLogged)
-  async getDrafts(
-    @Ctx() ctx: Context,
-    @Arg("take") take: number,
-    @Arg("offset") offset: number
-  ): Promise<PaginatedDrafts> {
+  async createChapter(
+    @Arg("chapterData") data: InputCreateChapter,
+    @Ctx() ctx: Context
+  ): Promise<Chapter> {
     const author = await ctx.prisma.user.findUnique({
       where: { id: ctx.req.session.userId },
     });
 
     if (!author) {
-      throw new AuthenticationError("Please login");
+      throw new AuthenticationError("Invalid user.");
     }
 
-    const chapters = await ctx.prisma.chapter.findMany({
-      take,
-      skip: offset,
-      where: { authorId: author.id, status: StatusEnum.Draft },
+    // for when chapters can be put into books
+    let book:
+      | (Book & {
+          chapters: Chapter[];
+        })
+      | null = null;
+    if (data.bookId) {
+      book = await ctx.prisma.book.findUnique({
+        where: { id: data.bookId },
+        include: { chapters: true },
+      });
+    }
+
+    if (book && book.authorId !== author.id) {
+      throw new AuthenticationError("Book is not yours.");
+    }
+
+    const totalNumberOfChapters = book?.chapters.length;
+
+    const chapter = await ctx.prisma.chapter.create({
+      data: {
+        title: data.title,
+        text: data.text,
+        authorId: author.id,
+        bookId: book ? book.id : undefined,
+        chapterNumber: book ? totalNumberOfChapters! + 1 : undefined,
+        description: data.description,
+        status: data.status,
+        tags: data.tags
+          ? {
+              createMany: {
+                data: getTagsData(data.tags, { authorId: author.id }),
+              },
+            }
+          : undefined,
+      },
       include: {
-        tags: true,
-        comments: { include: { author: true } },
-        book: true,
+        tags: !!data.tags,
         author: true,
-        ...(ctx.req.session.userId && {
-          reactions: {
-            where: { authorId: ctx.req.session.userId },
-          },
-        }),
       },
     });
 
-    let hasMore = true;
-    if (chapters.length < take) hasMore = false;
-
-    return { drafts: chapters, hasMore };
+    return chapter;
   }
 
   /**
+   * ---------------------------------------------------
    * @UPDATE_CHAPTER
+   * ---------------------------------------------------
    */
   @Mutation(() => Chapter)
   @UseMiddleware(isLogged)
@@ -414,7 +353,16 @@ export class ChapterResolver {
 
     const updatedChapter = ctx.prisma.chapter.update({
       where: { id: data.chapterId },
-      data: updateData,
+      data: {
+        ...updateData,
+        tags: {
+          createMany: {
+            data: !data.tags
+              ? []
+              : getTagsData(data.tags, { authorId: user.id }),
+          },
+        },
+      },
       include: {
         tags: true,
         comments: { include: { author: true } },
@@ -432,56 +380,52 @@ export class ChapterResolver {
   }
 
   /**
-   *
-   * @ADD_CHAPTER_TO_BOOK
+   * ---------------------------------------------------
+   * @GET_DRAFTS
+   * ---------------------------------------------------
    */
-  @Mutation(() => Chapter)
+  @Query(() => PaginatedDrafts)
   @UseMiddleware(isLogged)
-  async addChapterToBook(
-    @Arg("chapterId") chapterId: string,
-    @Arg("bookId") bookId: string,
-    @Ctx() ctx: Context
-  ): Promise<Chapter> {
-    const book = await ctx.prisma.book.findUnique({
-      where: { id: bookId },
-      include: { chapters: true },
-    });
-    if (!book) {
-      throw new UserInputError("Book doesn't exist or has been deleted.");
-    }
-
-    const chapter = await ctx.prisma.chapter.findUnique({
-      where: { id: chapterId },
-    });
-    if (!chapter) {
-      throw new UserInputError("Chapter doesn't exist or has been deleted.");
-    }
-
-    const user = await ctx.prisma.user.findUnique({
+  async getDrafts(
+    @Ctx() ctx: Context,
+    @Arg("take") take: number,
+    @Arg("offset") offset: number
+  ): Promise<PaginatedDrafts> {
+    const author = await ctx.prisma.user.findUnique({
       where: { id: ctx.req.session.userId },
     });
-    if (!user) {
-      throw new AuthenticationError("Invalid user.");
-    }
-    if (book.authorId !== user.id || chapter.authorId !== user.id) {
-      throw new AuthenticationError("Book or chapter is not yours.");
+
+    if (!author) {
+      throw new AuthenticationError("Please login");
     }
 
-    const chapterNumber = book.chapters.length;
-    const updatedChapter = ctx.prisma.chapter.update({
-      where: { id: chapter.id },
-      data: { bookId: book.id, chapterNumber: chapterNumber + 1 },
-      include: { book: true },
+    const chapters = await ctx.prisma.chapter.findMany({
+      take,
+      skip: offset,
+      where: { authorId: author.id, status: StatusEnum.DRAFT },
+      include: {
+        tags: true,
+        comments: { include: { author: true } },
+        book: true,
+        author: true,
+        ...(ctx.req.session.userId && {
+          reactions: {
+            where: { authorId: ctx.req.session.userId },
+          },
+        }),
+      },
     });
-    if (!updatedChapter) {
-      throw new ApolloError("Something went wrogn, please try again.");
-    }
-    return updatedChapter;
+
+    let hasMore = true;
+    if (chapters.length < take) hasMore = false;
+
+    return { drafts: chapters, hasMore };
   }
 
   /**
+   * ---------------------------------------------------
    * @DELETE_CHAPTER
-   * TODO: should I return Chapter here after deletion?
+   * ---------------------------------------------------
    */
   @Mutation(() => Chapter)
   @UseMiddleware(isLogged)
@@ -541,7 +485,9 @@ export class ChapterResolver {
   }
 
   /**
+   * ---------------------------------------------------
    * @CHANGE_STATUS
+   * ---------------------------------------------------
    */
   @Mutation(() => Chapter)
   @UseMiddleware(isLogged)
@@ -595,5 +541,97 @@ export class ChapterResolver {
     } catch (err) {
       throw new ApolloError(err.message);
     }
+  }
+
+  /**
+   * ====================================================================
+   *                      FOR BOOKS -- future features
+   * ====================================================================
+   */
+
+  /**
+   * ---------------------------------------------------
+   * @ADD_CHAPTER_TO_BOOK
+   * ---------------------------------------------------
+   */
+  @Mutation(() => Chapter)
+  @UseMiddleware(isLogged)
+  async addChapterToBook(
+    @Arg("chapterId") chapterId: string,
+    @Arg("bookId") bookId: string,
+    @Ctx() ctx: Context
+  ): Promise<Chapter> {
+    const book = await ctx.prisma.book.findUnique({
+      where: { id: bookId },
+      include: { chapters: true },
+    });
+    if (!book) {
+      throw new UserInputError("Book doesn't exist or has been deleted.");
+    }
+
+    const chapter = await ctx.prisma.chapter.findUnique({
+      where: { id: chapterId },
+    });
+    if (!chapter) {
+      throw new UserInputError("Chapter doesn't exist or has been deleted.");
+    }
+
+    const user = await ctx.prisma.user.findUnique({
+      where: { id: ctx.req.session.userId },
+    });
+    if (!user) {
+      throw new AuthenticationError("Invalid user.");
+    }
+    if (book.authorId !== user.id || chapter.authorId !== user.id) {
+      throw new AuthenticationError("Book or chapter is not yours.");
+    }
+
+    const chapterNumber = book.chapters.length;
+    const updatedChapter = ctx.prisma.chapter.update({
+      where: { id: chapter.id },
+      data: { bookId: book.id, chapterNumber: chapterNumber + 1 },
+      include: { book: true },
+    });
+    if (!updatedChapter) {
+      throw new ApolloError("Something went wrogn, please try again.");
+    }
+    return updatedChapter;
+  }
+
+  /**
+   * ---------------------------------------------------
+   * @GET_CHAPTERS_FROM_BOOK
+   * ---------------------------------------------------
+   */
+  @Query(() => [Chapter])
+  @UseMiddleware(isLogged)
+  async getChaptersFromBook(
+    @Arg("bookId") bookId: string,
+    @Ctx() ctx: Context
+  ): Promise<Chapter[]> {
+    const author = await ctx.prisma.user.findUnique({
+      where: { id: ctx.req.session.userId },
+    });
+
+    if (!author) {
+      throw new AuthenticationError("Invalid user.");
+    }
+    const book = await ctx.prisma.book.findUnique({ where: { id: bookId } });
+    if (!book) {
+      throw new UserInputError("Book doesn't exist or has been deleted.");
+    }
+    if (book.authorId !== author.id) {
+      throw new AuthenticationError("Book is not yours.");
+    }
+
+    const chapters = await ctx.prisma.chapter.findMany({
+      where: { bookId },
+      orderBy: { chapterNumber: "asc" },
+      include: {
+        tags: true,
+        comments: true,
+      },
+    });
+    return chapters;
   }
 }

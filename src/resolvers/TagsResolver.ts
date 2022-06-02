@@ -1,9 +1,18 @@
 import { AuthenticationError, UserInputError } from "apollo-server-express";
-import { Tag } from "../entities/Tag";
 import { Context } from "src/types";
-import { Arg, Ctx, Field, InputType, Mutation, Resolver, UseMiddleware } from "type-graphql";
-import InputTags from "./interfaces/InputTags";
+import { getTagsData } from "../utils/getTagsData";
+import {
+  Arg,
+  Ctx,
+  Field,
+  InputType,
+  Mutation,
+  Resolver,
+  UseMiddleware,
+} from "type-graphql";
+import { Tag } from "../entities/Tag";
 import isLogged from "../middleware/isLogged";
+import InputTags from "./interfaces/InputTags";
 
 @InputType()
 class InputCreateTags {
@@ -24,7 +33,10 @@ export class TagsResolver {
    */
   @Mutation(() => [Tag])
   @UseMiddleware(isLogged)
-  async createTags(@Arg("data") data: InputCreateTags, @Ctx() ctx: Context): Promise<InputTags[]> {
+  async createTags(
+    @Arg("data") data: InputCreateTags,
+    @Ctx() ctx: Context
+  ): Promise<InputTags[]> {
     const author = await ctx.prisma.user.findUnique({
       where: { id: ctx.req.session.userId },
     });
@@ -46,12 +58,7 @@ export class TagsResolver {
         throw new AuthenticationError("Book is not yours.");
       }
       await ctx.prisma.tag.createMany({
-        data: data.tags.map((tag) => ({
-          label: tag.label,
-          value: tag.value,
-          bookId: book.id,
-          authorId: author.id,
-        })),
+        data: getTagsData(data.tags, { authorId: author.id, bookId: book.id }),
       });
 
       const tags = await ctx.prisma.tag.findMany({
@@ -95,7 +102,10 @@ export class TagsResolver {
    */
   @Mutation(() => Boolean)
   @UseMiddleware(isLogged)
-  async deleteTag(@Arg("id") id: string, @Ctx() ctx: Context): Promise<boolean> {
+  async deleteTag(
+    @Arg("id") id: string,
+    @Ctx() ctx: Context
+  ): Promise<boolean> {
     const author = await ctx.prisma.user.findUnique({
       where: { id: ctx.req.session.userId },
     });
