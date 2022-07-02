@@ -16,12 +16,12 @@ Backend code for Book Editor made for personal use.
 
 [Upwork](https://www.upwork.com/freelancers/~01cf6056c175469e6a)
 
-### Future Features
+### Development
 
-- Reordering Chapters
-
-- Merging Chapters
-
-- New chapter after certain point
-
-- Notes per words/phrases
+- Clone repo
+- `yarn install`
+- `yarn prisma:generate`
+- Create Postgres database called `acario_treasury`
+- Add .env file
+- `npx prisma migrate dev`
+- Yes for reset database; give the migration a name
