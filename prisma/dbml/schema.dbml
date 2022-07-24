@@ -3,7 +3,7 @@
 //// ------------------------------------------------------
 
 Table User {
-  id String [pk]
+  id Int [pk, increment]
   email String [unique, not null]
   username String [unique, not null]
   name String [not null]
@@ -13,7 +13,6 @@ Table User {
   avatarSeed String [not null, default: 'scrivono']
   books Book [not null]
   chapters Chapter [not null]
-  tags Tag [not null]
   following Follow [not null]
   followers Follow [not null]
   comments Comment [not null]
@@ -24,13 +23,12 @@ Table User {
 }
 
 Table Book {
-  id String [pk]
+  id Int [pk, increment]
   author User [not null]
-  authorId String [not null]
+  authorId Int [not null]
   description String [not null]
   title String [not null]
   chapters Chapter [not null]
-  tags Tag [not null]
   comments Comment [not null]
   reactions BookReaction [not null]
   likes Int [not null, default: 0]
@@ -40,17 +38,17 @@ Table Book {
 }
 
 Table Chapter {
-  id String [pk]
+  id Int [pk, increment]
   title String [not null]
   text String [not null]
   description String [not null, default: '']
   status String [not null, default: 'published']
   chapterNumber Int [not null, default: -1]
   book Book
-  bookId String
+  bookId Int
   author User [not null]
-  authorId String [not null]
-  tags Tag [not null]
+  authorId Int [not null]
+  tags TagsOnChapters [not null]
   comments Comment [not null]
   reactions ChapterReaction [not null]
   ReadLater ReadLater [not null]
@@ -61,23 +59,28 @@ Table Chapter {
 }
 
 Table Tag {
-  id String [pk]
+  id Int [pk, increment]
   label String [not null]
   value String [not null]
-  book Book
-  bookId String
-  chapter Chapter
-  chapterId String
-  author User [not null]
-  authorId String [not null]
-  createdAt DateTime [default: `now()`, not null]
+  chapters TagsOnChapters [not null]
+}
+
+Table TagsOnChapters {
+  chapter Chapter [not null]
+  chapterId Int [not null]
+  tag Tag [not null]
+  tagId Int [not null]
+
+  indexes {
+    (chapterId, tagId) [pk]
+  }
 }
 
 Table Follow {
   leader User [not null]
-  leaderId String [not null]
+  leaderId Int [not null]
   follow User [not null]
-  followId String [not null]
+  followId Int [not null]
 
   indexes {
     (leaderId, followId) [pk]
@@ -85,24 +88,24 @@ Table Follow {
 }
 
 Table Comment {
-  id String [pk]
+  id Int [pk, increment]
   text String [not null]
   author User [not null]
-  authorId String [not null]
+  authorId Int [not null]
   book Book
-  bookId String
+  bookId Int
   chapter Chapter
-  chapterId String
+  chapterId Int
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
 }
 
 Table BookReaction {
   author User [not null]
-  authorId String [not null]
+  authorId Int [not null]
   value Int [not null]
   book Book [not null]
-  bookId String [not null]
+  bookId Int [not null]
 
   indexes {
     (authorId, bookId) [pk]
@@ -111,10 +114,10 @@ Table BookReaction {
 
 Table ChapterReaction {
   author User [not null]
-  authorId String [not null]
+  authorId Int [not null]
   value Int [not null]
   chapter Chapter [not null]
-  chapterId String [not null]
+  chapterId Int [not null]
 
   indexes {
     (authorId, chapterId) [pk]
@@ -123,9 +126,9 @@ Table ChapterReaction {
 
 Table ReadLater {
   author User [not null]
-  authorId String [not null]
+  authorId Int [not null]
   chapter Chapter [not null]
-  chapterId String [not null]
+  chapterId Int [not null]
   createdAt DateTime [default: `now()`, not null]
 
   indexes {
@@ -139,11 +142,9 @@ Ref: Chapter.bookId > Book.id
 
 Ref: Chapter.authorId > User.id
 
-Ref: Tag.bookId > Book.id
+Ref: TagsOnChapters.chapterId > Chapter.id
 
-Ref: Tag.chapterId > Chapter.id
-
-Ref: Tag.authorId > User.id
+Ref: TagsOnChapters.tagId > Tag.id
 
 Ref: Follow.leaderId > User.id
 

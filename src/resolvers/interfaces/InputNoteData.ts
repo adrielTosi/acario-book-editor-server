@@ -9,10 +9,10 @@ class InputNoteData {
   text: string;
 
   @Field()
-  bookId: string;
+  bookId: number;
 
   @Field()
-  chapterId: string;
+  chapterId: number;
 }
 
 export default InputNoteData;

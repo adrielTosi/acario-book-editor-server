@@ -4,10 +4,10 @@ import InputTag from "./InputTags";
 @InputType()
 class InputUpdateChapter {
   @Field({ nullable: true })
-  bookId?: string;
+  bookId?: number;
 
   @Field()
-  chapterId: string;
+  chapterId: number;
 
   @Field({ nullable: true })
   title?: string;

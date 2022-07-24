@@ -16,7 +16,7 @@ import { Context } from "./types";
 import { UserResolver } from "./resolvers/UserResolver";
 import { BookResolver } from "./resolvers/BookResolver";
 import { ChapterResolver } from "./resolvers/ChapterResolver";
-import { TagsResolver } from "./resolvers/TagsResolver";
+// import { TagsResolver } from "./resolvers/TagsResolver";
 import { FollowResolver } from "./resolvers/FollowResolver";
 import { CommentResolver } from "./resolvers/CommentResolver";
 import { ReactionResolver } from "./resolvers/ReactionResolver";
@@ -24,7 +24,7 @@ import { ReadLaterResolver } from "./resolvers/ReadLaterResolver";
 
 declare module "express-session" {
   interface Session {
-    userId: string;
+    userId: number;
   }
 }
 
@@ -52,8 +52,7 @@ const main = async () => {
         sameSite: "lax",
         secure: process.env.NODE_ENV === "production",
         // COULD HAVE PROBLEM WITH FORWARDING COOCKIES
-        domain:
-          process.env.NODE_ENV === "production" ? ".scrivono.xyz" : undefined,
+        domain: process.env.NODE_ENV === "production" ? ".scrivono.xyz" : undefined,
       },
       resave: false,
       saveUninitialized: false,
@@ -68,7 +67,7 @@ const main = async () => {
         UserResolver,
         BookResolver,
         ChapterResolver,
-        TagsResolver,
+        // TagsResolver,
         FollowResolver,
         CommentResolver,
         ReactionResolver,

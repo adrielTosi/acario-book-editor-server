@@ -5,6 +5,9 @@ CREATE TABLE "User" (
     "username" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "password" TEXT NOT NULL,
+    "bio" VARCHAR(400) NOT NULL DEFAULT E'Hello, check out my stories!',
+    "avatarType" TEXT NOT NULL DEFAULT E'croodles',
+    "avatarSeed" TEXT NOT NULL DEFAULT E'scrivono',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     PRIMARY KEY ("id")
@@ -29,6 +32,8 @@ CREATE TABLE "Chapter" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "text" TEXT NOT NULL,
+    "description" VARCHAR(400) NOT NULL DEFAULT E'',
+    "status" TEXT NOT NULL DEFAULT E'published',
     "chapterNumber" INTEGER NOT NULL DEFAULT -1,
     "bookId" TEXT,
     "authorId" TEXT NOT NULL,
@@ -92,6 +97,15 @@ CREATE TABLE "ChapterReaction" (
     PRIMARY KEY ("authorId","chapterId")
 );
 
+-- CreateTable
+CREATE TABLE "ReadLater" (
+    "authorId" TEXT NOT NULL,
+    "chapterId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY ("authorId","chapterId")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "User.email_unique" ON "User"("email");
 
@@ -142,3 +156,9 @@ ALTER TABLE "ChapterReaction" ADD FOREIGN KEY ("authorId") REFERENCES "User"("id
 
 -- AddForeignKey
 ALTER TABLE "ChapterReaction" ADD FOREIGN KEY ("chapterId") REFERENCES "Chapter"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ReadLater" ADD FOREIGN KEY ("authorId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ReadLater" ADD FOREIGN KEY ("chapterId") REFERENCES "Chapter"("id") ON DELETE CASCADE ON UPDATE CASCADE;

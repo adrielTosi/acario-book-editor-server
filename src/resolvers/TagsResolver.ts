@@ -1,133 +1,118 @@
-import { AuthenticationError, UserInputError } from "apollo-server-express";
-import { Context } from "src/types";
-import { getTagsData } from "../utils/getTagsData";
-import {
-  Arg,
-  Ctx,
-  Field,
-  InputType,
-  Mutation,
-  Resolver,
-  UseMiddleware,
-} from "type-graphql";
-import { Tag } from "../entities/Tag";
-import isLogged from "../middleware/isLogged";
-import InputTags from "./interfaces/InputTags";
+// import { AuthenticationError, UserInputError } from "apollo-server-express";
+// import { Context } from "src/types";
+// import { getTagsData } from "../utils/getTagsData";
+// import { Arg, Ctx, Field, InputType, Mutation, Resolver, UseMiddleware } from "type-graphql";
+// import { Tag } from "../entities/Tag";
+// import isLogged from "../middleware/isLogged";
+// import InputTags from "./interfaces/InputTags";
 
-@InputType()
-class InputCreateTags {
-  @Field(() => [InputTags])
-  tags: InputTags[];
+// @InputType()
+// class InputCreateTags {
+//   @Field(() => [InputTags])
+//   tags: InputTags[];
 
-  @Field(() => String, { nullable: true })
-  bookId?: string;
+//   @Field(() => String, { nullable: true })
+//   bookId?: number;
 
-  @Field(() => String, { nullable: true })
-  chapterId?: string;
-}
+//   @Field(() => String, { nullable: true })
+//   chapterId?: number;
+// }
 
-@Resolver((_of) => Tag)
-export class TagsResolver {
-  /**
-   * @CREATE_TAGS
-   */
-  @Mutation(() => [Tag])
-  @UseMiddleware(isLogged)
-  async createTags(
-    @Arg("data") data: InputCreateTags,
-    @Ctx() ctx: Context
-  ): Promise<InputTags[]> {
-    const author = await ctx.prisma.user.findUnique({
-      where: { id: ctx.req.session.userId },
-    });
+// @Resolver((_of) => Tag)
+// export class TagsResolver {
+//   /**
+//    * @CREATE_TAGS
+//    */
+//   @Mutation(() => [Tag])
+//   @UseMiddleware(isLogged)
+//   async createTags(@Arg("data") data: InputCreateTags, @Ctx() ctx: Context): Promise<InputTags[]> {
+//     const author = await ctx.prisma.user.findUnique({
+//       where: { id: ctx.req.session.userId },
+//     });
 
-    if (!author) {
-      throw new AuthenticationError("Invalid user.");
-    }
+//     if (!author) {
+//       throw new AuthenticationError("Invalid user.");
+//     }
 
-    // if it's adding tags to Book
-    if (data.bookId) {
-      const book = await ctx.prisma.book.findUnique({
-        where: { id: data.bookId },
-        include: { tags: true },
-      });
-      if (!book) {
-        throw new UserInputError("Book doesn't exist.");
-      }
-      if (book.authorId !== author.id) {
-        throw new AuthenticationError("Book is not yours.");
-      }
-      await ctx.prisma.tag.createMany({
-        data: getTagsData(data.tags, { authorId: author.id, bookId: book.id }),
-      });
+//     // if it's adding tags to Book
+//     if (data.bookId) {
+//       const book = await ctx.prisma.book.findUnique({
+//         where: { id: data.bookId },
+//       });
+//       if (!book) {
+//         throw new UserInputError("Book doesn't exist.");
+//       }
+//       if (book.authorId !== author.id) {
+//         throw new AuthenticationError("Book is not yours.");
+//       }
+//       await ctx.prisma.tag.createMany({
+//         data: getTagsData(data.tags, { authorId: author.id, bookId: book.id }),
+//       });
 
-      const tags = await ctx.prisma.tag.findMany({
-        where: { bookId: book.id },
-      });
+//       const tags = await ctx.prisma.tag.findMany({
+//         where: { bookId: book.id },
+//       });
 
-      return tags;
-      // If it's adding tags to chapter
-    } else if (data.chapterId) {
-      const chapter = await ctx.prisma.chapter.findUnique({
-        where: { id: data.chapterId },
-        include: { tags: true },
-      });
-      if (!chapter) {
-        throw new UserInputError("Chapter doesn't exist.");
-      }
-      if (chapter.authorId !== author.id) {
-        throw new AuthenticationError("Book is not yours.");
-      }
+//       return tags;
+//       // If it's adding tags to chapter
+//     } else if (data.chapterId) {
+//       const chapter = await ctx.prisma.chapter.findUnique({
+//         where: { id: data.chapterId },
+//         include: { tags: true },
+//       });
+//       if (!chapter) {
+//         throw new UserInputError("Chapter doesn't exist.");
+//       }
+//       if (chapter.authorId !== author.id) {
+//         throw new AuthenticationError("Book is not yours.");
+//       }
 
-      await ctx.prisma.tag.createMany({
-        data: data.tags.map((tag) => ({
-          label: tag.label,
-          value: tag.value,
-          chapterId: chapter.id,
-          authorId: author.id,
-        })),
-      });
-      const tags = await ctx.prisma.tag.findMany({
-        where: { chapterId: data.chapterId },
-      });
+//       await ctx.prisma.tag.createMany({
+//         data: data.tags.map((tag) => ({
+//           label: tag.label,
+//           value: tag.value,
+//           chapterId: chapter.id,
+//           authorId: author.id,
+//         })),
+//       });
+//       const tags = await ctx.prisma.tag.findMany({
+//         where: { chapterId: data.chapterId },
+//       });
 
-      return tags;
-    } else {
-      throw new UserInputError("Please provide Book or Chapter Id.");
-    }
-  }
+//       return tags;
+//     } else {
+//       throw new UserInputError("Please provide Book or Chapter Id.");
+//     }
+//   }
 
-  /**
-   * @DELETE_TAG
-   */
-  @Mutation(() => Boolean)
-  @UseMiddleware(isLogged)
-  async deleteTag(
-    @Arg("id") id: string,
-    @Ctx() ctx: Context
-  ): Promise<boolean> {
-    const author = await ctx.prisma.user.findUnique({
-      where: { id: ctx.req.session.userId },
-    });
+//   /**
+//    * @DELETE_TAG
+//    */
+//   @Mutation(() => Boolean)
+//   @UseMiddleware(isLogged)
+//   async deleteTag(@Arg("id") id: string, @Ctx() ctx: Context): Promise<boolean> {
+//     const author = await ctx.prisma.user.findUnique({
+//       where: { id: ctx.req.session.userId },
+//     });
 
-    if (!author) {
-      throw new AuthenticationError("Invalid user.");
-    }
+//     if (!author) {
+//       throw new AuthenticationError("Invalid user.");
+//     }
 
-    const tag = await ctx.prisma.tag.findUnique({ where: { id } });
-    if (!tag) {
-      throw new UserInputError("Tag dosn't exist or has been deleted.");
-    }
-    if (tag.authorId !== author.id) {
-      throw new AuthenticationError("Book or Chapter is not yours.");
-    }
+//     const tag = await ctx.prisma.tag.findUnique({ where: { id } });
+//     if (!tag) {
+//       throw new UserInputError("Tag dosn't exist or has been deleted.");
+//     }
+//     if (tag.authorId !== author.id) {
+//       throw new AuthenticationError("Book or Chapter is not yours.");
+//     }
 
-    try {
-      await ctx.prisma.tag.delete({ where: { id } });
-    } catch (err) {
-      throw new UserInputError("Something went wrong, please try again.");
-    }
+//     try {
+//       await ctx.prisma.tag.delete({ where: { id } });
+//     } catch (err) {
+//       throw new UserInputError("Something went wrong, please try again.");
+//     }
 
-    return true;
-  }
-}
+//     return true;
+//   }
+// }

@@ -4,7 +4,7 @@ import { User } from "./User";
 @ObjectType()
 export class Comment {
   @Field(() => ID)
-  id: string;
+  id: number;
 
   @Field()
   text: string;
@@ -13,13 +13,13 @@ export class Comment {
   author?: User;
 
   @Field()
-  authorId: string;
+  authorId: number;
 
   @Field(() => String, { nullable: true })
-  bookId: string | null;
+  bookId: number | null;
 
   @Field(() => String, { nullable: true })
-  chapterId: string | null;
+  chapterId: number | null;
 
   // -------
   @Field(() => String)

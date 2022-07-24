@@ -1,9 +1,9 @@
 import InputTag from "src/resolvers/interfaces/InputTags";
 
 export interface IGetTagsData {
-  authorId: string;
-  chapterId?: string;
-  bookId?: string;
+  authorId: number;
+  chapterId?: number;
+  bookId?: number;
 }
 
 export const getTagsData = (tags: InputTag[], data: IGetTagsData) => {

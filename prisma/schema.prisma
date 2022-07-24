@@ -16,7 +16,7 @@ generator dbml {
 }
 
 model User {
-  id               String            @id @default(cuid())
+  id               Int               @id @default(autoincrement())
   email            String            @unique
   username         String            @unique
   name             String
@@ -26,7 +26,6 @@ model User {
   avatarSeed       String            @default("scrivono")
   books            Book[]
   chapters         Chapter[]
-  tags             Tag[]
   following        Follow[]          @relation("follow")
   followers        Follow[]          @relation("leader")
   comments         Comment[]
@@ -37,13 +36,12 @@ model User {
 }
 
 model Book {
-  id          String         @id @default(cuid())
+  id          Int            @id @default(autoincrement())
   author      User           @relation(fields: [authorId], references: [id])
-  authorId    String
+  authorId    Int
   description String         @db.VarChar(200)
   title       String
   chapters    Chapter[]
-  tags        Tag[]
   comments    Comment[]
   reactions   BookReaction[]
   likes       Int            @default(0)
@@ -53,17 +51,17 @@ model Book {
 }
 
 model Chapter {
-  id            String            @id @default(cuid())
+  id            Int               @id @default(autoincrement())
   title         String
   text          String
   description   String            @default("") @db.VarChar(400)
   status        String            @default("published")
   chapterNumber Int               @default(-1)
   book          Book?             @relation(fields: [bookId], references: [id])
-  bookId        String?
+  bookId        Int?
   author        User              @relation(fields: [authorId], references: [id])
-  authorId      String
-  tags          Tag[]
+  authorId      Int
+  tags          TagsOnChapters[]
   comments      Comment[]
   reactions     ChapterReaction[]
   ReadLater     ReadLater[]
@@ -73,66 +71,82 @@ model Chapter {
   updatedAt     DateTime          @updatedAt
 }
 
+// model Tag {
+//   id        String   @id @default(autoincrement())
+//   label     String   @db.VarChar(50)
+//   value     String   @db.VarChar(50)
+//   book      Book?    @relation(fields: [bookId], references: [id])
+//   bookId    String?
+//   chapter   Chapter? @relation(fields: [chapterId], references: [id])
+//   chapterId String?
+//   author    User     @relation(fields: [authorId], references: [id])
+//   authorId  String
+//   createdAt DateTime @default(now())
+// }
+
 model Tag {
-  id        String   @id @default(cuid())
-  label     String   @db.VarChar(50)
-  value     String   @db.VarChar(50)
-  book      Book?    @relation(fields: [bookId], references: [id])
-  bookId    String?
-  chapter   Chapter? @relation(fields: [chapterId], references: [id])
-  chapterId String?
-  author    User     @relation(fields: [authorId], references: [id])
-  authorId  String
-  createdAt DateTime @default(now())
+  id       Int              @id @default(autoincrement())
+  label    String
+  value    String
+  chapters TagsOnChapters[]
+}
+
+model TagsOnChapters {
+  chapter   Chapter @relation(fields: [chapterId], references: [id])
+  chapterId Int // relation scalar field (used in the `@relation` attribute above)
+  tag       Tag     @relation(fields: [tagId], references: [id])
+  tagId     Int // relation scalar field (used in the `@relation` attribute above)
+
+  @@id([chapterId, tagId])
 }
 
 model Follow {
-  leader   User   @relation("leader", fields: [leaderId], references: [id])
-  leaderId String
-  follow   User   @relation("follow", fields: [followId], references: [id])
-  followId String
+  leader   User @relation("leader", fields: [leaderId], references: [id])
+  leaderId Int
+  follow   User @relation("follow", fields: [followId], references: [id])
+  followId Int
 
   @@id([leaderId, followId])
 }
 
 model Comment {
-  id        String   @id @default(cuid())
+  id        Int      @id @default(autoincrement())
   text      String
   author    User     @relation(fields: [authorId], references: [id])
-  authorId  String
+  authorId  Int
   book      Book?    @relation(fields: [bookId], references: [id])
-  bookId    String?
+  bookId    Int?
   chapter   Chapter? @relation(fields: [chapterId], references: [id])
-  chapterId String?
+  chapterId Int?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model BookReaction {
-  author   User   @relation(fields: [authorId], references: [id])
-  authorId String
+  author   User @relation(fields: [authorId], references: [id])
+  authorId Int
   value    Int
-  book     Book   @relation(fields: [bookId], references: [id])
-  bookId   String
+  book     Book @relation(fields: [bookId], references: [id])
+  bookId   Int
 
   @@id([authorId, bookId])
 }
 
 model ChapterReaction {
   author    User    @relation(fields: [authorId], references: [id])
-  authorId  String
+  authorId  Int
   value     Int
   chapter   Chapter @relation(fields: [chapterId], references: [id])
-  chapterId String
+  chapterId Int
 
   @@id([authorId, chapterId])
 }
 
 model ReadLater {
   author    User     @relation(fields: [authorId], references: [id])
-  authorId  String
+  authorId  Int
   chapter   Chapter  @relation(fields: [chapterId], references: [id])
-  chapterId String
+  chapterId Int
   createdAt DateTime @default(now())
 
   @@id([authorId, chapterId])

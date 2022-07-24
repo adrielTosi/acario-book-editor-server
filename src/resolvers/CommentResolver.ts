@@ -1,13 +1,5 @@
 import { Comment } from "../entities/Comment";
-import {
-  Arg,
-  Ctx,
-  Field,
-  InputType,
-  Mutation,
-  Resolver,
-  UseMiddleware,
-} from "type-graphql";
+import { Arg, Ctx, Field, InputType, Int, Mutation, Resolver, UseMiddleware } from "type-graphql";
 import { Context } from "../types";
 import isLogged from "../middleware/isLogged";
 import { AuthenticationError, UserInputError } from "apollo-server-express";
@@ -17,11 +9,11 @@ export class InputCreateComment {
   @Field()
   text: string;
 
-  @Field(() => String, { nullable: true })
-  bookId?: string;
+  @Field(() => Int, { nullable: true })
+  bookId?: number;
 
-  @Field(() => String, { nullable: true })
-  chapterId?: string;
+  @Field(() => Int, { nullable: true })
+  chapterId?: number;
 }
 
 @Resolver((_of) => Comment)
@@ -90,7 +82,7 @@ export class CommentResolver {
   @Mutation(() => Comment)
   @UseMiddleware(isLogged)
   async updateComment(
-    @Arg("id") id: string,
+    @Arg("id") id: number,
     @Arg("text") text: string,
     @Ctx() ctx: Context
   ): Promise<Comment> {
@@ -128,10 +120,7 @@ export class CommentResolver {
    */
   @Mutation(() => Comment)
   @UseMiddleware(isLogged)
-  async deleteComment(
-    @Arg("id") id: string,
-    @Ctx() ctx: Context
-  ): Promise<Comment> {
+  async deleteComment(@Arg("id") id: number, @Ctx() ctx: Context): Promise<Comment> {
     const author = await ctx.prisma.user.findUnique({
       where: { id: ctx.req.session.userId },
     });

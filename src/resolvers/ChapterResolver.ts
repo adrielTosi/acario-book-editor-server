@@ -1,14 +1,11 @@
 import { Book } from "@prisma/client";
-import {
-  ApolloError,
-  AuthenticationError,
-  UserInputError,
-} from "apollo-server-express";
+import { ApolloError, AuthenticationError, UserInputError } from "apollo-server-express";
 import {
   Arg,
   Ctx,
   Field,
   InputType,
+  Int,
   Mutation,
   ObjectType,
   Query,
@@ -19,7 +16,7 @@ import {
 import { Chapter } from "../entities/Chapter";
 import isLogged from "../middleware/isLogged";
 import { Context } from "../types";
-import { getTagsData } from "../utils/getTagsData";
+// import { getTagsData } from "../utils/getTagsData";
 import InputTag from "./interfaces/InputTags";
 import InputUpdateChapter from "./interfaces/InputUpdateChapter";
 import { StatusEnum } from "./interfaces/Status.enum";
@@ -35,8 +32,8 @@ class InputCreateChapter {
   @Field()
   title: string;
 
-  @Field(() => String, { nullable: true })
-  bookId?: string;
+  @Field(() => Int, { nullable: true })
+  bookId?: number;
 
   @Field(() => String)
   status: string;
@@ -142,9 +139,7 @@ export class ChapterResolver {
     });
 
     if (!chapters) {
-      throw new ApolloError(
-        "Something went wrong, please refresh and try again."
-      );
+      throw new ApolloError("Something went wrong, please refresh and try again.");
     }
 
     let hasMore = true;
@@ -161,7 +156,7 @@ export class ChapterResolver {
   // @UseMiddleware(isLogged)
   async getChapter(
     // @Arg("bookId", { nullable: true }) bookId: string,
-    @Arg("chapterId") chapterId: string,
+    @Arg("chapterId") chapterId: number,
     @Ctx() ctx: Context
   ): Promise<Chapter> {
     // const loggedUser = await ctx.prisma.user.findUnique({
@@ -293,13 +288,6 @@ export class ChapterResolver {
         chapterNumber: book ? totalNumberOfChapters! + 1 : undefined,
         description: data.description,
         status: data.status,
-        tags: data.tags
-          ? {
-              createMany: {
-                data: getTagsData(data.tags, { authorId: author.id }),
-              },
-            }
-          : undefined,
       },
       include: {
         tags: !!data.tags,
@@ -355,13 +343,6 @@ export class ChapterResolver {
       where: { id: data.chapterId },
       data: {
         ...updateData,
-        tags: {
-          createMany: {
-            data: !data.tags
-              ? []
-              : getTagsData(data.tags, { authorId: user.id }),
-          },
-        },
       },
       include: {
         tags: true,
@@ -430,7 +411,7 @@ export class ChapterResolver {
   @Mutation(() => Chapter)
   @UseMiddleware(isLogged)
   async deleteChapter(
-    @Arg("chapterId") chapterId: string,
+    @Arg("chapterId") chapterId: number,
     // @Arg("bookId") bookId: string,
     @Ctx() ctx: Context
   ): Promise<Chapter> {
@@ -471,15 +452,9 @@ export class ChapterResolver {
     });
 
     try {
-      await ctx.prisma.$transaction([
-        deleteReactions,
-        deleteComments,
-        deleteChapter,
-      ]);
+      await ctx.prisma.$transaction([deleteReactions, deleteComments, deleteChapter]);
     } catch {
-      throw new ApolloError(
-        "Something went wrong, please refresh and try again."
-      );
+      throw new ApolloError("Something went wrong, please refresh and try again.");
     }
     return chapter;
   }
@@ -493,7 +468,7 @@ export class ChapterResolver {
   @UseMiddleware(isLogged)
   async changeStatus(
     @Arg("newStatus", () => StatusEnum) newStatus: StatusEnum,
-    @Arg("id") id: string,
+    @Arg("id") id: number,
     @Ctx() ctx: Context
   ): Promise<Chapter> {
     const user = await ctx.prisma.user.findUnique({
@@ -557,8 +532,8 @@ export class ChapterResolver {
   @Mutation(() => Chapter)
   @UseMiddleware(isLogged)
   async addChapterToBook(
-    @Arg("chapterId") chapterId: string,
-    @Arg("bookId") bookId: string,
+    @Arg("chapterId") chapterId: number,
+    @Arg("bookId") bookId: number,
     @Ctx() ctx: Context
   ): Promise<Chapter> {
     const book = await ctx.prisma.book.findUnique({
@@ -606,7 +581,7 @@ export class ChapterResolver {
   @Query(() => [Chapter])
   @UseMiddleware(isLogged)
   async getChaptersFromBook(
-    @Arg("bookId") bookId: string,
+    @Arg("bookId") bookId: number,
     @Ctx() ctx: Context
   ): Promise<Chapter[]> {
     const author = await ctx.prisma.user.findUnique({

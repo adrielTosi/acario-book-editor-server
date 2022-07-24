@@ -1,8 +1,4 @@
-import {
-  ApolloError,
-  AuthenticationError,
-  UserInputError,
-} from "apollo-server-express";
+import { ApolloError, AuthenticationError, UserInputError } from "apollo-server-express";
 import { ReadLater } from "../entities/ReadLater";
 import isLogged from "../middleware/isLogged";
 import { Context } from "../types";
@@ -34,7 +30,7 @@ export class ReadLaterResolver {
   @Mutation(() => ReadLater)
   @UseMiddleware(isLogged)
   async saveChapterToReadLater(
-    @Arg("id") chapterId: string,
+    @Arg("id") chapterId: number,
     @Ctx() ctx: Context
   ): Promise<ReadLater> {
     const user = await ctx.prisma.user.findUnique({
@@ -157,10 +153,7 @@ export class ReadLaterResolver {
    */
   @Query(() => ReadLater)
   @UseMiddleware(isLogged)
-  async removeFromReadLater(
-    @Ctx() ctx: Context,
-    @Arg("id") chapterId: string
-  ): Promise<ReadLater> {
+  async removeFromReadLater(@Ctx() ctx: Context, @Arg("id") chapterId: number): Promise<ReadLater> {
     const user = await ctx.prisma.user.findUnique({
       where: { id: ctx.req.session.userId },
     });

@@ -1,6 +1,0 @@
--- AlterTable
-ALTER TABLE "User" ADD COLUMN     "avatarSeed" TEXT NOT NULL DEFAULT E'scrivono',
-ADD COLUMN     "avatarType" TEXT NOT NULL DEFAULT E'croodles',
-ADD COLUMN     "bio" VARCHAR(400) NOT NULL DEFAULT E'',
-ADD COLUMN     "numberOfFollowers" INTEGER NOT NULL DEFAULT 0,
-ADD COLUMN     "numberOfFollowing" INTEGER NOT NULL DEFAULT 0;

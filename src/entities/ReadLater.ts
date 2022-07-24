@@ -8,13 +8,13 @@ export class ReadLater {
   author?: User;
 
   @Field()
-  authorId: string;
+  authorId: number;
 
   @Field(() => Chapter)
   chapter?: Chapter;
 
   @Field(() => String)
-  chapterId: string;
+  chapterId: number;
 
   @Field(() => String)
   createdAt: Date;

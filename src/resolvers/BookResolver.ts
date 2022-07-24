@@ -80,7 +80,6 @@ export class BookResolver {
       },
       include: {
         author: true,
-        tags: true,
         chapters: true,
         comments: true,
         reactions: true,
@@ -100,7 +99,7 @@ export class BookResolver {
    */
   @Query(() => Book)
   @UseMiddleware(isLogged)
-  async getBook(@Arg("bookId") bookId: string, @Ctx() ctx: Context): Promise<Book> {
+  async getBook(@Arg("bookId") bookId: number, @Ctx() ctx: Context): Promise<Book> {
     const author = await ctx.prisma.user.findUnique({
       where: { id: ctx.req.session.userId },
     });
@@ -118,7 +117,6 @@ export class BookResolver {
           },
         },
         author: true,
-        tags: true,
         comments: true,
       },
     });
@@ -140,7 +138,7 @@ export class BookResolver {
   @UseMiddleware(isLogged)
   async getBooks(
     @Ctx() ctx: Context,
-    @Arg("userId", { nullable: true }) userId: string
+    @Arg("userId", { nullable: true }) userId: number
   ): Promise<Book[]> {
     // if id is passed get that user, otherwise get logged in user
     const author = await ctx.prisma.user.findUnique({
@@ -160,7 +158,6 @@ export class BookResolver {
             tags: true,
           },
         },
-        tags: true,
         comments: true,
       },
     });
@@ -198,21 +195,9 @@ export class BookResolver {
         description: data.description,
         title: data.title,
         authorId: user.id,
-        tags: data.tags
-          ? {
-              createMany: {
-                data: data.tags.map((tag) => ({
-                  label: tag.label,
-                  value: tag.value,
-                  authorId: user.id,
-                })),
-              },
-            }
-          : undefined,
       },
       include: {
         chapters: true,
-        tags: !!data.tags,
       },
     });
 
@@ -224,7 +209,7 @@ export class BookResolver {
    */
   @Mutation(() => Boolean)
   @UseMiddleware(isLogged)
-  async deleteBook(@Arg("bookId") id: string, @Ctx() ctx: Context): Promise<Boolean> {
+  async deleteBook(@Arg("bookId") id: number, @Ctx() ctx: Context): Promise<Boolean> {
     const book = await ctx.prisma.book.findUnique({
       where: { id },
     });

@@ -9,7 +9,7 @@ export class ChapterReaction {
   author?: User;
 
   @Field()
-  authorId: string;
+  authorId: number;
 
   @Field(() => Int)
   value: number;
@@ -18,7 +18,7 @@ export class ChapterReaction {
   chapter?: Chapter;
 
   @Field(() => String)
-  chapterId: string;
+  chapterId: number;
 }
 @ObjectType()
 export class BookReaction {
@@ -26,7 +26,7 @@ export class BookReaction {
   author?: User;
 
   @Field()
-  authorId: string;
+  authorId: number;
 
   @Field(() => Int)
   value: number;
@@ -35,5 +35,5 @@ export class BookReaction {
   book?: Book;
 
   @Field(() => String)
-  bookId: string;
+  bookId: number;
 }

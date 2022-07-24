@@ -4,7 +4,7 @@ import { Field, ObjectType } from "type-graphql";
 @ObjectType()
 export class Tag {
   @Field()
-  id: string;
+  id: number;
 
   @Field()
   label: string;
@@ -14,10 +14,10 @@ export class Tag {
   value: string;
 
   @Field(() => String, { nullable: true })
-  bookId: string | null;
+  bookId: number | null;
 
   @Field(() => String, { nullable: true })
-  chapterId: string | null;
+  chapterId: number | null;
 
   // -------
   @Field(() => String)

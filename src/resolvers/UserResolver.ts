@@ -1,19 +1,6 @@
-import {
-  ApolloError,
-  AuthenticationError,
-  UserInputError,
-} from "apollo-server-express";
+import { ApolloError, AuthenticationError, UserInputError } from "apollo-server-express";
 import bcrypt from "bcrypt";
-import {
-  Arg,
-  Ctx,
-  Field,
-  InputType,
-  Mutation,
-  Query,
-  Resolver,
-  UseMiddleware,
-} from "type-graphql";
+import { Arg, Ctx, Field, InputType, Mutation, Query, Resolver, UseMiddleware } from "type-graphql";
 import v from "validator";
 import { User } from "../entities/User";
 import isLogged from "../middleware/isLogged";
@@ -166,9 +153,7 @@ export class UserResolver {
     @Arg("username", { nullable: true }) username?: string,
     @Arg("findFromUserId", { nullable: true }) findFromUserId?: boolean
   ): Promise<User> {
-    const Where = findFromUserId
-      ? { id: ctx.req.session.userId }
-      : { username };
+    const Where = findFromUserId ? { id: ctx.req.session.userId } : { username };
 
     const user = await ctx.prisma.user.findUnique({
       where: Where,
@@ -197,10 +182,7 @@ export class UserResolver {
    */
   @Mutation(() => User)
   @UseMiddleware(isLogged)
-  async updateProfile(
-    @Arg("data") data: InputUpdateProfile,
-    @Ctx() ctx: Context
-  ): Promise<User> {
+  async updateProfile(@Arg("data") data: InputUpdateProfile, @Ctx() ctx: Context): Promise<User> {
     const currentUser = await ctx.prisma.user.findUnique({
       where: { id: ctx.req.session.userId },
     });

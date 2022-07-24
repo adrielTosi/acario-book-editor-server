@@ -9,7 +9,7 @@ import { User } from "./User";
 @ObjectType()
 export class Book {
   @Field()
-  id: string;
+  id: number;
 
   @Field()
   title: string;
@@ -19,7 +19,7 @@ export class Book {
   description: string;
 
   @Field()
-  authorId: string;
+  authorId: number;
 
   @Field(() => User)
   author?: User;
