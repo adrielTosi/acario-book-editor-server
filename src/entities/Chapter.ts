@@ -1,9 +1,8 @@
-import { TagsOnChapters } from "@prisma/client";
 import { Field, Int, ObjectType } from "type-graphql";
 import { Book } from "./Book";
 import { Comment } from "./Comment";
 import { ChapterReaction } from "./Reaction";
-import { Tag } from "./Tag";
+import { TagsOnChapters } from "./TagsOnChapter";
 import { User } from "./User";
 
 @ObjectType()
@@ -50,7 +49,7 @@ export class Chapter {
   @Field(() => [ChapterReaction], { nullable: true })
   reactions?: ChapterReaction[];
 
-  @Field(() => [Tag], { nullable: true })
+  @Field(() => [TagsOnChapters], { nullable: true })
   tags?: TagsOnChapters[];
 
   // -------

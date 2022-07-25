@@ -1,5 +1,6 @@
 import { Length } from "class-validator";
 import { Field, ObjectType } from "type-graphql";
+import { Chapter } from "./Chapter";
 
 @ObjectType()
 export class Tag {
@@ -13,13 +14,6 @@ export class Tag {
   @Length(0, 50)
   value: string;
 
-  @Field(() => String, { nullable: true })
-  bookId: number | null;
-
-  @Field(() => String, { nullable: true })
-  chapterId: number | null;
-
-  // -------
-  @Field(() => String)
-  createdAt: Date;
+  @Field(() => [Chapter])
+  chapters: Chapter[];
 }

@@ -1,5 +1,6 @@
 import { Book } from "@prisma/client";
 import { ApolloError, AuthenticationError, UserInputError } from "apollo-server-express";
+import { appSlugify } from "../utils/appSlugify";
 import {
   Arg,
   Ctx,
@@ -16,7 +17,6 @@ import {
 import { Chapter } from "../entities/Chapter";
 import isLogged from "../middleware/isLogged";
 import { Context } from "../types";
-// import { getTagsData } from "../utils/getTagsData";
 import InputTag from "./interfaces/InputTags";
 import InputUpdateChapter from "./interfaces/InputUpdateChapter";
 import { StatusEnum } from "./interfaces/Status.enum";
@@ -89,7 +89,7 @@ export class PaginatedTimelineChapters {
 @Resolver((_of) => Chapter)
 export class ChapterResolver {
   /** --------------------------------------------------
-   * @TIMELINE_BOOKS
+   * @TIMELINE_CHAPTERS
    * ---------------------------------------------------
    */
   @Query(() => PaginatedTimelineChapters)
@@ -123,7 +123,11 @@ export class ChapterResolver {
       },
       include: {
         author: true,
-        tags: true,
+        tags: {
+          include: {
+            tag: true,
+          },
+        },
         ...(ctx.req.session.userId && {
           reactions: {
             where: { authorId: ctx.req.session.userId },
@@ -178,7 +182,11 @@ export class ChapterResolver {
     const chapter = await ctx.prisma.chapter.findUnique({
       where: { id: chapterId },
       include: {
-        tags: true,
+        tags: {
+          include: {
+            tag: true,
+          },
+        },
         comments: {
           include: {
             author: true,
@@ -223,7 +231,11 @@ export class ChapterResolver {
       where: { authorId: author.id, AND: { status: StatusEnum.PUBLISHED } },
       orderBy: { createdAt: "desc" },
       include: {
-        tags: true,
+        tags: {
+          include: {
+            tag: true,
+          },
+        },
         comments: { include: { author: true } },
         book: true,
         author: true,
@@ -288,9 +300,30 @@ export class ChapterResolver {
         chapterNumber: book ? totalNumberOfChapters! + 1 : undefined,
         description: data.description,
         status: data.status,
+        ...(data.tags && {
+          tags: {
+            create: data.tags.map((tagData) => {
+              return {
+                tag: {
+                  connectOrCreate: {
+                    where: { value: appSlugify(tagData.value) },
+                    create: {
+                      label: tagData.label,
+                      value: appSlugify(tagData.value),
+                    },
+                  },
+                },
+              };
+            }),
+          },
+        }),
       },
       include: {
-        tags: !!data.tags,
+        tags: {
+          include: {
+            tag: true,
+          },
+        },
         author: true,
       },
     });
@@ -333,19 +366,36 @@ export class ChapterResolver {
       throw new AuthenticationError("This story is not yours.");
     }
 
-    const updateData = {
-      title: data.title,
-      text: data.text,
-      description: data.description,
-    };
-
     const updatedChapter = ctx.prisma.chapter.update({
       where: { id: data.chapterId },
       data: {
-        ...updateData,
+        title: data.title,
+        text: data.text,
+        description: data.description,
+        ...(data.tags && {
+          tags: {
+            create: data.tags.map((tagData) => {
+              return {
+                tag: {
+                  connectOrCreate: {
+                    where: { value: appSlugify(tagData.value) },
+                    create: {
+                      label: tagData.label,
+                      value: appSlugify(tagData.value),
+                    },
+                  },
+                },
+              };
+            }),
+          },
+        }),
       },
       include: {
-        tags: true,
+        tags: {
+          include: {
+            tag: true,
+          },
+        },
         comments: { include: { author: true } },
         book: true,
         author: true,
@@ -385,7 +435,11 @@ export class ChapterResolver {
       skip: offset,
       where: { authorId: author.id, status: StatusEnum.DRAFT },
       include: {
-        tags: true,
+        tags: {
+          include: {
+            tag: true,
+          },
+        },
         comments: { include: { author: true } },
         book: true,
         author: true,
@@ -501,7 +555,11 @@ export class ChapterResolver {
           status: newStatus.toString(),
         },
         include: {
-          tags: true,
+          tags: {
+            include: {
+              tag: true,
+            },
+          },
           comments: { include: { author: true } },
           book: true,
           author: true,

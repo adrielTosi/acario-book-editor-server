@@ -17,7 +17,7 @@ export class ChapterReaction {
   @Field(() => Chapter)
   chapter?: Chapter;
 
-  @Field(() => String)
+  @Field()
   chapterId: number;
 }
 @ObjectType()

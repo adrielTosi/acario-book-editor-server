@@ -13,7 +13,7 @@ export class ReadLater {
   @Field(() => Chapter)
   chapter?: Chapter;
 
-  @Field(() => String)
+  @Field(() => Number)
   chapterId: number;
 
   @Field(() => String)

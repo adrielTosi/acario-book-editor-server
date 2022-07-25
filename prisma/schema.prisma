@@ -87,15 +87,15 @@ model Chapter {
 model Tag {
   id       Int              @id @default(autoincrement())
   label    String
-  value    String
+  value    String           @unique
   chapters TagsOnChapters[]
 }
 
 model TagsOnChapters {
   chapter   Chapter @relation(fields: [chapterId], references: [id])
-  chapterId Int // relation scalar field (used in the `@relation` attribute above)
+  chapterId Int
   tag       Tag     @relation(fields: [tagId], references: [id])
-  tagId     Int // relation scalar field (used in the `@relation` attribute above)
+  tagId     Int
 
   @@id([chapterId, tagId])
 }

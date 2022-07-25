@@ -61,7 +61,7 @@ Table Chapter {
 Table Tag {
   id Int [pk, increment]
   label String [not null]
-  value String [not null]
+  value String [unique, not null]
   chapters TagsOnChapters [not null]
 }
 
