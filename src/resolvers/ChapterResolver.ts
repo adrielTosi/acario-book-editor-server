@@ -358,6 +358,7 @@ export class ChapterResolver {
 
     const chapter = await ctx.prisma.chapter.findUnique({
       where: { id: data.chapterId },
+      include: { tags: { include: { tag: true } } },
     });
     if (!chapter) {
       throw new UserInputError("Chapter doesn't exist or has been deleted.");
@@ -366,8 +367,16 @@ export class ChapterResolver {
       throw new AuthenticationError("This story is not yours.");
     }
 
-    const updatedChapter = ctx.prisma.chapter.update({
-      where: { id: data.chapterId },
+    const tagsOnDatabase = chapter.tags;
+    const tagsIdsToDelete = tagsOnDatabase
+      .filter((tagOnChapter) =>
+        data.tags?.some((inputTag) => inputTag.value !== appSlugify(tagOnChapter.tag.value))
+      )
+      .map((tagOnChapter) => tagOnChapter.tagId);
+    console.log(tagsIdsToDelete);
+
+    const updateChapter = ctx.prisma.chapter.update({
+      where: { id: chapter.id },
       data: {
         title: data.title,
         text: data.text,
@@ -386,6 +395,9 @@ export class ChapterResolver {
                   },
                 },
               };
+            }),
+            disconnect: tagsIdsToDelete.map((tagId) => {
+              return { chapterId_tagId: { chapterId: chapter.id, tagId: tagId } };
             }),
           },
         }),
@@ -406,6 +418,17 @@ export class ChapterResolver {
         }),
       },
     });
+
+    const deleteTagsOnChapter = ctx.prisma.tagsOnChapters.deleteMany({
+      where: {
+        chapterId: chapter.id,
+        AND: {
+          tagId: { in: tagsIdsToDelete },
+        },
+      },
+    });
+
+    const [_, updatedChapter] = await ctx.prisma.$transaction([deleteTagsOnChapter, updateChapter]);
 
     return updatedChapter;
   }
