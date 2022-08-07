@@ -1,4 +1,4 @@
-import { Book } from "@prisma/client";
+import { Book, Tag } from "@prisma/client";
 import { ApolloError, AuthenticationError, UserInputError } from "apollo-server-express";
 import { appSlugify } from "../utils/appSlugify";
 import {
@@ -367,13 +367,30 @@ export class ChapterResolver {
       throw new AuthenticationError("This story is not yours.");
     }
 
-    const tagsOnDatabase = chapter.tags;
-    const tagsIdsToDelete = tagsOnDatabase
-      .filter((tagOnChapter) =>
-        data.tags?.some((inputTag) => inputTag.value !== appSlugify(tagOnChapter.tag.value))
-      )
-      .map((tagOnChapter) => tagOnChapter.tagId);
-    console.log(tagsIdsToDelete);
+    // Entries to be deleted from DB -- Tags that are not in the chapter list of tags anymore
+    const tagsOnDatabase = chapter.tags.map((tagOnChapter) => tagOnChapter.tag);
+    const tagsIdsToDelete: Tag[] = [];
+    tagsOnDatabase.forEach((tagOnChapter) => {
+      const dataTagsValues = data.tags?.map((clientTag) => clientTag.value);
+
+      const isInDbButNotInClient = !dataTagsValues?.includes(tagOnChapter.value);
+
+      if (isInDbButNotInClient) {
+        tagsIdsToDelete.push(tagOnChapter);
+      }
+    });
+
+    // Entries to be created on DB -- tags not yet added to this chapter
+    const tagsOnChapterToCreate: Omit<Tag, "id">[] = [];
+    data.tags?.forEach((dataTag) => {
+      const dbTagsValues = tagsOnDatabase?.map((dbTag) => dbTag.value);
+
+      const isInClientButNoInDb = !dbTagsValues.includes(dataTag.value);
+
+      if (isInClientButNoInDb) {
+        tagsOnChapterToCreate.push(dataTag);
+      }
+    });
 
     const updateChapter = ctx.prisma.chapter.update({
       where: { id: chapter.id },
@@ -381,9 +398,10 @@ export class ChapterResolver {
         title: data.title,
         text: data.text,
         description: data.description,
-        ...(data.tags && {
+        ...(tagsOnChapterToCreate.length > 0 && {
           tags: {
-            create: data.tags.map((tagData) => {
+            // tagsOnChapter
+            create: tagsOnChapterToCreate.map((tagData) => {
               return {
                 tag: {
                   connectOrCreate: {
@@ -395,9 +413,6 @@ export class ChapterResolver {
                   },
                 },
               };
-            }),
-            disconnect: tagsIdsToDelete.map((tagId) => {
-              return { chapterId_tagId: { chapterId: chapter.id, tagId: tagId } };
             }),
           },
         }),
@@ -423,7 +438,7 @@ export class ChapterResolver {
       where: {
         chapterId: chapter.id,
         AND: {
-          tagId: { in: tagsIdsToDelete },
+          tagId: { in: tagsIdsToDelete.map((tag) => tag.id) },
         },
       },
     });
@@ -524,12 +539,15 @@ export class ChapterResolver {
     const deleteComments = ctx.prisma.comment.deleteMany({
       where: { chapterId: chapter.id },
     });
+    const deleteTags = ctx.prisma.tagsOnChapters.deleteMany({
+      where: { chapterId: chapter.id },
+    });
     const deleteChapter = ctx.prisma.chapter.delete({
       where: { id: chapter.id },
     });
 
     try {
-      await ctx.prisma.$transaction([deleteReactions, deleteComments, deleteChapter]);
+      await ctx.prisma.$transaction([deleteReactions, deleteComments, deleteTags, deleteChapter]);
     } catch {
       throw new ApolloError("Something went wrong, please refresh and try again.");
     }
