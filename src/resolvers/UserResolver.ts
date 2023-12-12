@@ -164,6 +164,7 @@ export class UserResolver {
             followId: ctx.req.session?.userId,
           },
         },
+        chapters: true,
         _count: {
           select: { chapters: true, followers: true, following: true },
         },

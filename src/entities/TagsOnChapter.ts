@@ -4,10 +4,10 @@ import { Tag } from "./Tag";
 
 @ObjectType()
 export class TagsOnChapters {
-  @Field(() => ID)
+  @Field()
   tagId: number;
 
-  @Field(() => ID)
+  @Field()
   chapterId: number;
 
   @Field(() => Tag, { nullable: true })

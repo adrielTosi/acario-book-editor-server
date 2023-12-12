@@ -3,7 +3,7 @@ import { User } from "./User";
 
 @ObjectType()
 export class Comment {
-  @Field(() => ID)
+  @Field()
   id: number;
 
   @Field()

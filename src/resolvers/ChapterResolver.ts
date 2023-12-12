@@ -1,5 +1,9 @@
 import { Book, Tag } from "@prisma/client";
-import { ApolloError, AuthenticationError, UserInputError } from "apollo-server-express";
+import {
+  ApolloError,
+  AuthenticationError,
+  UserInputError,
+} from "apollo-server-express";
 import { appSlugify } from "../utils/appSlugify";
 import {
   Arg,
@@ -125,7 +129,7 @@ export class ChapterResolver {
         author: true,
         tags: {
           include: {
-            tag: true,
+            tag: { include: { chapters: true } },
           },
         },
         ...(ctx.req.session.userId && {
@@ -143,7 +147,9 @@ export class ChapterResolver {
     });
 
     if (!chapters) {
-      throw new ApolloError("Something went wrong, please refresh and try again.");
+      throw new ApolloError(
+        "Something went wrong, please refresh and try again."
+      );
     }
 
     let hasMore = true;
@@ -373,7 +379,9 @@ export class ChapterResolver {
     tagsOnDatabase.forEach((tagOnChapter) => {
       const dataTagsValues = data.tags?.map((clientTag) => clientTag.value);
 
-      const isInDbButNotInClient = !dataTagsValues?.includes(tagOnChapter.value);
+      const isInDbButNotInClient = !dataTagsValues?.includes(
+        tagOnChapter.value
+      );
 
       if (isInDbButNotInClient) {
         tagsIdsToDelete.push(tagOnChapter);
@@ -443,7 +451,10 @@ export class ChapterResolver {
       },
     });
 
-    const [_, updatedChapter] = await ctx.prisma.$transaction([deleteTagsOnChapter, updateChapter]);
+    const [_, updatedChapter] = await ctx.prisma.$transaction([
+      deleteTagsOnChapter,
+      updateChapter,
+    ]);
 
     return updatedChapter;
   }
@@ -547,9 +558,16 @@ export class ChapterResolver {
     });
 
     try {
-      await ctx.prisma.$transaction([deleteReactions, deleteComments, deleteTags, deleteChapter]);
+      await ctx.prisma.$transaction([
+        deleteReactions,
+        deleteComments,
+        deleteTags,
+        deleteChapter,
+      ]);
     } catch {
-      throw new ApolloError("Something went wrong, please refresh and try again.");
+      throw new ApolloError(
+        "Something went wrong, please refresh and try again."
+      );
     }
     return chapter;
   }

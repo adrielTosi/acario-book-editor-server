@@ -19,7 +19,7 @@ export class _Count {
 
 @ObjectType()
 export class User {
-  @Field(() => ID)
+  @Field()
   id: number;
 
   @Field()

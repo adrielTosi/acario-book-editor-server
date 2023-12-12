@@ -2,9 +2,9 @@ import { Field, ID, ObjectType } from "type-graphql";
 
 @ObjectType()
 export class Follow {
-  @Field(() => ID)
+  @Field()
   leaderId: number;
 
-  @Field(() => ID)
+  @Field()
   followId: number;
 }
