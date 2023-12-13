@@ -1,6 +1,6 @@
 import { Length } from "class-validator";
 import { Field, ObjectType } from "type-graphql";
-import { Chapter } from "./Chapter";
+import { TagsOnChapters } from "./TagsOnChapter";
 
 @ObjectType()
 export class Tag {
@@ -14,6 +14,6 @@ export class Tag {
   @Length(0, 50)
   value: string;
 
-  @Field(() => [Chapter])
-  chapters: Chapter[];
+  @Field(() => [TagsOnChapters])
+  chapters: TagsOnChapters[];
 }

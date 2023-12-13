@@ -130,6 +130,7 @@ export class ChapterResolver {
         tags: {
           include: {
             tag: { include: { chapters: true } },
+            chapter: true,
           },
         },
         ...(ctx.req.session.userId && {
@@ -190,7 +191,7 @@ export class ChapterResolver {
       include: {
         tags: {
           include: {
-            tag: true,
+            tag: { include: { chapters: true } },
           },
         },
         comments: {
@@ -239,7 +240,7 @@ export class ChapterResolver {
       include: {
         tags: {
           include: {
-            tag: true,
+            tag: { include: { chapters: true } },
           },
         },
         comments: { include: { author: true } },
@@ -327,7 +328,7 @@ export class ChapterResolver {
       include: {
         tags: {
           include: {
-            tag: true,
+            tag: { include: { chapters: true } },
           },
         },
         author: true,
@@ -364,7 +365,7 @@ export class ChapterResolver {
 
     const chapter = await ctx.prisma.chapter.findUnique({
       where: { id: data.chapterId },
-      include: { tags: { include: { tag: true } } },
+      include: { tags: { include: { tag: { include: { chapters: true } } } } },
     });
     if (!chapter) {
       throw new UserInputError("Chapter doesn't exist or has been deleted.");
@@ -428,7 +429,7 @@ export class ChapterResolver {
       include: {
         tags: {
           include: {
-            tag: true,
+            tag: { include: { chapters: true } },
           },
         },
         comments: { include: { author: true } },
@@ -486,7 +487,7 @@ export class ChapterResolver {
       include: {
         tags: {
           include: {
-            tag: true,
+            tag: { include: { chapters: true } },
           },
         },
         comments: { include: { author: true } },
@@ -616,7 +617,7 @@ export class ChapterResolver {
         include: {
           tags: {
             include: {
-              tag: true,
+              tag: { include: { chapters: true } },
             },
           },
           comments: { include: { author: true } },
